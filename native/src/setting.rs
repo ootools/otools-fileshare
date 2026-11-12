@@ -168,6 +168,13 @@ pub fn update_upload_path(path: &Value) -> UpdateOutcome {
     }
     // 上游比较 getUploadPath() === path
     let unchanged = get_upload_path()? == *path;
+    // 上游 executor 里 resolve(ValueNotChange) 同步先 settle：JS Promise 首个
+    // settle 生效，后续 reject 全是 no-op——即「值未变」时无论目录是否存在/
+    // 是否目录，结果都是 ValueNotChange（setStorageItem 是同值幂等写入）。
+    if unchanged {
+        store::set_item(UPLOAD_PATH_KEY, path.clone())?;
+        return Ok(MSG_VALUE_NOT_CHANGE);
+    }
     let path_str = value_to_js_string(path);
     let target = std::path::Path::new(&path_str);
     // 上游 fs.existsSync（跟随符号链接）
@@ -176,20 +183,12 @@ pub fn update_upload_path(path: &Value) -> UpdateOutcome {
     }
     // 上游 fs.lstatSync().isDirectory()：不跟随符号链接（指向目录的符号链接
     // 同样会被判为「必须为文件夹」，按上游行为保留）。
-    // 注意：上游这里 resolve(ValueNotChange) 后没有 return，值没变也会顺延
-    // 跑完存在性校验（目录仍在则首个 resolve 生效 → 返回 ValueNotChange；
-    // 目录被删则 reject「文件夹不存在」）。1:1 复刻该顺序。
     let metadata = std::fs::symlink_metadata(&path_str).map_err(|error| error.to_string())?;
     if !metadata.is_dir() {
         return Err(MSG_UPLOAD_PATH_NOT_DIR.to_string());
     }
-    // 上游未变时也会重写一遍（同值，等价幂等）
     store::set_item(UPLOAD_PATH_KEY, path.clone())?;
-    Ok(if unchanged {
-        MSG_VALUE_NOT_CHANGE
-    } else {
-        MSG_MODIFIED
-    })
+    Ok(MSG_MODIFIED)
 }
 
 pub fn update_port(port: &Value) -> UpdateOutcome {
@@ -449,6 +448,10 @@ mod tests {
             std::fs::create_dir_all(&dir).unwrap();
             assert_eq!(update_upload_path(&json!(dir)).unwrap(), "修改成功");
             assert_eq!(get_upload_path().unwrap(), json!(dir));
+            assert_eq!(update_upload_path(&json!(dir)).unwrap(), "ValueNotChange");
+            // 值未变但目录已被删：上游 JS Promise 首个 settle 生效 → 仍是
+            // ValueNotChange（后续 reject 是 no-op），不能变成「文件夹不存在」
+            std::fs::remove_dir_all(&dir).unwrap();
             assert_eq!(update_upload_path(&json!(dir)).unwrap(), "ValueNotChange");
         });
     }
