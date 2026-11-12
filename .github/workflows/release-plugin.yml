@@ -60,11 +60,6 @@ jobs:
           pattern: plugin-native-*
           path: lib
           merge-multiple: true
-      - name: Create universal2 library
-        run: |
-          lipo -create lib/macOS-arm64.dylib lib/macOS-x86_64.dylib -output lib/macOS.dylib
-          codesign --force --sign - --timestamp=none lib/macOS.dylib
-          rm lib/macOS-arm64.dylib lib/macOS-x86_64.dylib
       - name: 探测构建模式
         id: mode
         shell: bash
@@ -111,23 +106,32 @@ jobs:
         env:
           CARGO_NET_GIT_FETCH_WITH_CLI: "true"
         run: node scripts/build-web.mjs
-      - name: 打包正式插件并生成摘要
+      - name: 打包分平台/分架构插件并生成摘要
         env:
           VERSION: ${{ steps.meta.outputs.version }}
-        run: node scripts/pack-plugin.mjs --out dist-pack --version "$VERSION"
+        run: |
+          # 只发分包（packageMode=1），不打合包；六变体各带 SHA256SUMS。
+          node scripts/pack-plugin.mjs --platform windows --arch x64    --out dist-pack --version "$VERSION"
+          node scripts/pack-plugin.mjs --platform windows --arch arm64  --out dist-pack --version "$VERSION"
+          node scripts/pack-plugin.mjs --platform linux   --arch x64    --out dist-pack --version "$VERSION"
+          node scripts/pack-plugin.mjs --platform linux   --arch arm64  --out dist-pack --version "$VERSION"
+          node scripts/pack-plugin.mjs --platform macos   --arch arm64  --out dist-pack --version "$VERSION"
+          node scripts/pack-plugin.mjs --platform macos   --arch x64    --out dist-pack --version "$VERSION"
       - name: 独立验证插件包
         env:
           VERSION: ${{ steps.meta.outputs.version }}
           PACKID: ${{ steps.meta.outputs.packid }}
-        run: node scripts/verify-plugin.mjs dist-pack
+        run: |
+          failed=0
+          for dir in dist-pack/*/; do
+            [ -d "$dir" ] || continue
+            node scripts/verify-plugin.mjs "$dir" || failed=1
+          done
+          exit $failed
       - uses: actions/upload-artifact@v4
         with:
           name: oplg
-          path: |
-            dist-pack/*.oplg
-            dist-pack/plugin.json
-            dist-pack/logo.svg
-            dist-pack/SHA256SUMS
+          path: dist-pack/
           if-no-files-found: error
           retention-days: 14
       - name: 构建摘要
@@ -137,7 +141,10 @@ jobs:
           PUBLISH_ENABLED: ${{ steps.meta.outputs.publish_enabled }}
         run: |
           printf '### 插件构建完成\n- 插件：`%s`\n- 版本：`%s`\n- 允许正式发布：`%s`\n\n' "$PACKID" "$VERSION" "$PUBLISH_ENABLED" >> "$GITHUB_STEP_SUMMARY"
-          cat dist-pack/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+          find dist-pack -name 'SHA256SUMS' | sort | while read -r sums; do
+            printf '#### %s\n' "$(dirname "$sums")"
+            cat "$sums" >> "$GITHUB_STEP_SUMMARY"
+          done
 
   publish:
     needs: build
@@ -162,7 +169,13 @@ jobs:
         env:
           VERSION: ${{ needs.build.outputs.version }}
           PACKID: ${{ needs.build.outputs.packid }}
-        run: node scripts/verify-plugin.mjs release-assets
+        run: |
+          failed=0
+          for dir in release-assets/*/; do
+            [ -d "$dir" ] || continue
+            node scripts/verify-plugin.mjs "$dir" || failed=1
+          done
+          exit $failed
       - name: 检查市场凭证配置（不发送凭证、不上架）
         if: ${{ needs.build.outputs.market_requested == 'true' }}
         env:
@@ -194,7 +207,7 @@ jobs:
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --target "$COMMIT_SHA" --title "$RELEASE_TAG" --notes "${PACKID} v${RELEASE_VERSION}"
           fi
-          gh release upload "$RELEASE_TAG" release-assets/*.oplg release-assets/logo.svg release-assets/plugin.json release-assets/SHA256SUMS --clobber
+          gh release upload "$RELEASE_TAG" release-assets/*/*.oplg --clobber
       # OIDC 获取和使用在同一进程完成，秘密不经过 job outputs 或 artifact。
       - name: 授权并提交市场
         if: ${{ needs.build.outputs.market_enabled == 'true' }}
@@ -209,7 +222,8 @@ jobs:
           OTOOLS_MARKET_API: ${{ vars.OTOOLS_MARKET_API || 'https://otools-api.lingyun.net/api/v1/otools/plugin/publish' }}
           RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
           RELEASE_VERSION: ${{ needs.build.outputs.version }}
-          PLUGIN_MANIFEST: release-assets/plugin.json
+          PLUGIN_MANIFEST: release-assets/macos/plugin.json
+          PLATFORM_PACKAGES: '1'
         run: node scripts/publish-market.mjs
       - name: 发布摘要
         env:

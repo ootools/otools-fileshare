@@ -34,9 +34,10 @@ test('market payload uses actual packageUrl and a renderable raw logo field',()=
   assert.equal(p.packageMode,undefined);
 });
 
-test('platform packages opt-in declares every per-arch asset and packageMode',()=>{
+test('platform packages opt-in declares every per-arch asset, drops combined packageUrl and sets packageMode',()=>{
   const p=marketPayload({packid:'plugin-a',uuid:'plugin-a',version:'1.2.0',entry:'dist/index.html'},'owner/repo','v1.2.0','1.2.0',{platformPackages:true});
-  assert.equal(p.packageUrl,'https://github.com/owner/repo/releases/download/v1.2.0/plugin-a-1.2.0.oplg');
+  // 分包模式（packageMode=1）不带合包 packageUrl：客户端按平台/架构字段选包
+  assert.equal(p.packageUrl,undefined);
   for (const [field, suffix] of [
     ['packageUrlWindows','-windows'],['packageUrlMacos','-macos'],['packageUrlLinux','-linux'],
     ['packageUrlMacosIntel','-macos-intel'],['packageUrlWindowsArm','-windows-arm'],['packageUrlLinuxArm','-linux-arm'],

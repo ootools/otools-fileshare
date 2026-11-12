@@ -90,9 +90,10 @@ export function marketPayload(manifest,repo,tag,version,extras={}) {
   // 改用 raw.githubusercontent.com 上同一 tag 的仓库文件：返回 image/svg+xml，
   // 可直接渲染，且随 tag 固定不会漂移。
   const logo=`https://raw.githubusercontent.com/${repo}/${encodeURIComponent(tag)}/logo.svg`;
-  const payload={...productionManifest(manifest,version),packageUrl:`${base}/${manifest.packid}-${version}.oplg`,logo};
+  const payload={...productionManifest(manifest,version),logo};
   // 分平台/分架构专用包为 opt-in：只有发布流水线确认这些资产已随 Release
-  // 上传时才声明（PLATFORM_PACKAGES=1），否则不带字段、合包 packageUrl 兜底。
+  // 上传时才声明（PLATFORM_PACKAGES=1）。分包模式下不声明合包 packageUrl
+  // （xycloud 在 packageMode=1 时放行缺失），客户端按平台/架构字段选包。
   if (extras.platformPackages) {
     for (const [field, suffix] of [
       ['packageUrlWindows', '-windows'],
@@ -105,6 +106,8 @@ export function marketPayload(manifest,repo,tag,version,extras={}) {
       payload[field]=`${base}/${manifest.packid}-${version}${suffix}.oplg`;
     }
     payload.packageMode=1;
+  } else {
+    payload.packageUrl=`${base}/${manifest.packid}-${version}.oplg`;
   }
   return payload;
 }
