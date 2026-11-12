@@ -71,6 +71,19 @@ pub fn get_item_with_default(key: &str, default: Value) -> Result<Value, String>
     }
 }
 
+/// 原子修改一个条目，避免业务模块读改写时丢失并发更新。
+pub fn mutate_item<T>(
+    key: &str,
+    default: Value,
+    edit: impl FnOnce(&mut Value) -> Result<T, String>,
+) -> Result<T, String> {
+    let _guard = lock();
+    let mut value = read_plugin_state_value::<Value>(PLUGIN_ID, key)?.unwrap_or(default);
+    let result = edit(&mut value)?;
+    save_plugin_state_value(PLUGIN_ID, key, &value)?;
+    Ok(result)
+}
+
 // ── 测试支持 ─────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -98,6 +111,7 @@ pub(crate) mod test_support {
         std::env::set_var("HOME", &home);
         // 运行时态（setting 的 curIp 覆盖）一并隔离，避免用例间串扰。
         crate::setting::test_reset_cur_ip();
+        crate::test_reset_shutdown_gate();
         let result = f(&home);
         match old_home {
             Some(value) => std::env::set_var("HOME", value),

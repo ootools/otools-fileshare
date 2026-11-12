@@ -31,8 +31,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  native:
+    uses: ./.github/workflows/native-build.yml
   build:
-    runs-on: ubuntu-latest
+    needs: native
+    runs-on: macos-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
       packid: ${{ steps.meta.outputs.packid }}
@@ -48,6 +51,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: plugin-native-*
+          path: lib
+          merge-multiple: true
+      - name: Create universal2 library
+        run: |
+          lipo -create lib/macOS-arm64.dylib lib/macOS-x86_64.dylib -output lib/macOS.dylib
+          codesign --force --sign - --timestamp=none lib/macOS.dylib
+          rm lib/macOS-arm64.dylib lib/macOS-x86_64.dylib
       - name: 探测构建模式
         id: mode
         shell: bash
@@ -64,7 +81,7 @@ jobs:
           AUTO_PUBLISH_MARKET: ${{ vars.OTOOLS_PUBLISH_MARKET || 'false' }}
         run: node scripts/publish-market.mjs meta
       - name: 发布脚本回归测试
-        run: node --test scripts/*.test.mjs
+        run: node --test scripts/*.test.mjs tests/*.test.mjs
       # rust 模式：纯 Rust/WASM 前端（egui 等）。trunk 用预编译二进制（比 cargo install 快），
       # 它首次运行会自行下载 wasm-bindgen-cli 与 wasm-opt。web 模式不需要这些。
       - uses: dtolnay/rust-toolchain@stable

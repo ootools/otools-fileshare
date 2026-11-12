@@ -28,7 +28,9 @@ New-Item -ItemType Directory -Force -Path $target | Out-Null
 $ship = @(
   "plugin.json",
   "logo.svg",
-  "dist"
+  "dist",
+  "web-static",
+  "lib"
 )
 
 foreach ($item in $ship) {

@@ -139,6 +139,13 @@ function main() {
   if (!/otools/i.test(entryData)) fail('入口 HTML 里没有 OTools 宿主桥（应包含 window.otools 或 window.otoolsPlugin）');
   ok('入口 HTML 含 OTools 宿主桥');
 
+  if (manifest.native?.enabled) {
+    const native = entries.filter(entry => /^lib\/(macOS\.dylib|Windows\.dll|Linux\.so)$/.test(entry.name));
+    if (!native.length || native.some(entry => entry.data.length < 64)) fail('native 平台库缺失或文件过小');
+    if (!names.includes('web-static/page_web/index.html')) fail('缺少手机端页面');
+    if (manifest.native.autoReload) fail('生产库不得启用 native.autoReload');
+    ok(`native 库与手机端页面完整：${native.map(entry => entry.name).join(', ')}`);
+  }
   const wasm = entries.filter((e) => e.name.endsWith('.wasm'));
   // 纯前端插件（web 模式）没有 wasm 是正常的；wasm 插件请在 plugin.json 设 "wasm": true 来强制校验。
   if (manifest.wasm === true) {

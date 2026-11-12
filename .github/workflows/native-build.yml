@@ -1,0 +1,45 @@
+name: native-build
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, artifact: windows, name: Windows.dll, source: otools_fileshare_native.dll }
+          - { os: ubuntu-latest, artifact: linux, name: Linux.so, source: libotools_fileshare_native.so }
+          - { os: macos-latest, artifact: macos-arm64, name: macOS-arm64.dylib, source: libotools_fileshare_native.dylib }
+          - { os: macos-15-intel, artifact: macos-x86_64, name: macOS-x86_64.dylib, source: libotools_fileshare_native.dylib }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native -> native/target
+          key: fileshare-${{ matrix.artifact }}
+      - name: Test native
+        run: cargo test --locked --manifest-path native/Cargo.toml
+      - name: Build cdylib
+        run: cargo build --locked --release --manifest-path native/Cargo.toml
+      - name: Stage platform library
+        shell: bash
+        env:
+          SOURCE: ${{ matrix.source }}
+          OUTPUT: ${{ matrix.name }}
+        run: |
+          mkdir -p artifacts/lib
+          cp "native/target/release/$SOURCE" "artifacts/lib/$OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-native-${{ matrix.artifact }}
+          path: artifacts/lib/*
+          if-no-files-found: error

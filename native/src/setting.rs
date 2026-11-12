@@ -53,10 +53,7 @@ fn is_js_truthy(value: &Value) -> bool {
     match value {
         Value::Null => false,
         Value::Bool(b) => *b,
-        Value::Number(n) => n
-            .as_f64()
-            .map(|f| f != 0.0 && !f.is_nan())
-            .unwrap_or(true),
+        Value::Number(n) => n.as_f64().map(|f| f != 0.0 && !f.is_nan()).unwrap_or(true),
         Value::String(s) => !s.is_empty(),
         Value::Array(_) | Value::Object(_) => true,
     }
@@ -131,8 +128,7 @@ pub fn get_ip() -> Result<String, String> {
     {
         return Ok(ip);
     }
-    // TODO(Task 4): 接入真实 IpUtil（网卡枚举 + ipv6 加 []），当前桩恒回 127.0.0.1
-    Ok(iputil::get_ip())
+    iputil::get_ip()
 }
 
 /// `http://<ip>:<port>`（上游 getUrl）。
@@ -156,6 +152,7 @@ pub fn get_setting() -> Result<Value, String> {
         "chunkSize": get_chunk_size()?,
         "autoStart": get_auto_start()?,
         "language": get_language()?,
+        "allowAnonymousUpload": store::get_item("allowAnonymousUpload")?.unwrap_or(json!(false)),
     }))
 }
 
@@ -432,8 +429,7 @@ mod tests {
             );
             // 不存在
             assert_eq!(
-                update_upload_path(&json!(home.join("nope")))
-                    .unwrap_err(),
+                update_upload_path(&json!(home.join("nope"))).unwrap_err(),
                 "文件夹不存在"
             );
             // 指向文件
@@ -475,6 +471,7 @@ mod tests {
     #[test]
     fn get_setting_shape_and_url_follows_port() {
         with_test_home(|_| {
+            update_ip(&json!("127.0.0.1")).unwrap();
             let s = get_setting().unwrap();
             for key in [
                 "uploadPath",
@@ -500,7 +497,10 @@ mod tests {
             assert_eq!(s["url"], json!("http://127.0.0.1:5421"));
             // 改端口后 url 跟随
             update_port(&json!(6000)).unwrap();
-            assert_eq!(get_setting().unwrap()["url"], json!("http://127.0.0.1:6000"));
+            assert_eq!(
+                get_setting().unwrap()["url"],
+                json!("http://127.0.0.1:6000")
+            );
         });
     }
 
@@ -583,11 +583,7 @@ mod tests {
                 "更新端口失败，端口为空"
             );
             let s = get_setting().unwrap();
-            assert_eq!(
-                s["authEnable"],
-                json!(false),
-                "Promise.all 副作用应已发生"
-            );
+            assert_eq!(s["authEnable"], json!(false), "Promise.all 副作用应已发生");
             assert_eq!(s["port"], json!(7000), "非法值不落盘");
         });
     }
@@ -613,14 +609,15 @@ mod tests {
                 "更新地址失败，地址为空"
             );
             assert_eq!(update_ip(&json!("")).unwrap_err(), "更新地址失败，地址为空");
-            // 与 IpUtil 桩回退值相同 → ValueNotChange
-            assert_eq!(update_ip(&json!("127.0.0.1")).unwrap(), "ValueNotChange");
+            // 当前真实网卡地址不依赖测试机是否有网络。
+            let initial_ip = get_ip().unwrap();
+            assert_eq!(update_ip(&json!(initial_ip)).unwrap(), "ValueNotChange");
             assert_eq!(update_ip(&json!("192.168.1.5")).unwrap(), "修改成功");
             assert_eq!(get_ip().unwrap(), "192.168.1.5");
             assert_eq!(get_url().unwrap(), "http://192.168.1.5:5421");
             // 运行时覆盖不持久化：重置后回到回退值
             test_reset_cur_ip();
-            assert_eq!(get_ip().unwrap(), "127.0.0.1");
+            assert_eq!(get_ip().unwrap(), initial_ip);
         });
     }
 
@@ -628,10 +625,7 @@ mod tests {
     fn ip_family_validation() {
         with_test_home(|_| {
             assert_eq!(get_ip_family().unwrap(), json!("ipv4"));
-            assert_eq!(
-                set_ip_family(&Value::Null).unwrap_err(),
-                "IP协议族不能为空"
-            );
+            assert_eq!(set_ip_family(&Value::Null).unwrap_err(), "IP协议族不能为空");
             assert_eq!(
                 set_ip_family(&json!("ipv5")).unwrap_err(),
                 "IP协议族必须是ipv4或ipv6"

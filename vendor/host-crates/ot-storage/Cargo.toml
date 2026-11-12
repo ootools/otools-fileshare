@@ -1,0 +1,10 @@
+[package]
+name = "ot-storage"
+version = "0.1.0"
+edition = "2021"
+description = "OTools data directory paths and small JSON file helpers"
+
+[dependencies]
+dirs = "5.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

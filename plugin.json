@@ -20,6 +20,7 @@
     "enabled": true,
     "autoReload": true
   },
+  "openMode": "panel",
   "openInBrowser": false,
   "packid": "otools-fileshare",
   "screenshots": [],

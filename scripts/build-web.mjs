@@ -96,6 +96,12 @@ if (!rustMode) {
     const file = path.join(dist, name);
     if (fs.statSync(file).isFile()) console.log(`  ${name} ${(fs.statSync(file).size / 1048576).toFixed(1)} MB`);
   }
+  const mobileDir = path.join(repoRoot, 'web-mobile');
+  if (fs.existsSync(path.join(mobileDir, 'package.json'))) {
+    const status = run(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['run', 'build'], { cwd: mobileDir, shell: process.platform === 'win32' });
+    if (status !== 0) process.exit(status);
+    if (!fs.existsSync(path.join(repoRoot, 'web-static/page_web/index.html'))) throw new Error('手机端构建缺少 index.html');
+  }
   console.log(`\n完成。${entry} 就绪；用 scripts/deploy-to-otools.ps1 同步到 otools 仓库即可本地试跑。`);
   process.exit(0);
 }

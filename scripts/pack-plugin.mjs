@@ -7,10 +7,8 @@
  * 扁平结构（plugin.json 在 ZIP 根）与「单一顶层目录」两种布局宿主都认，
  * 这里用扁平。
  *
- * 本插件是**纯前端**插件（没有 native cdylib），所以：
- *   - 不校验 lib/；
- *   - 用 `productionManifest` 去掉开发期配置（devUrl / quickDev），
- *     否则 OTools 的正式包校验会以「正式包不能启用开发模式」拒收。
+ * 本插件包含 Vue 面板、手机端静态页面与 native cdylib。
+ * 生产清单去掉 devUrl / quickDev 并关闭 native.autoReload。
  *
  * 用法：node scripts/pack-plugin.mjs [--out dist-pack] [--version 0.6.2]
  */
@@ -121,7 +119,7 @@ export function productionManifest(manifest, version = '') {
   const result = { ...manifest, version: next };
   delete result.devUrl;
   delete result.quickDev;
-  // 本插件没有 native；若将来加了，autoReload 是开发期热重载开关，同样要关掉。
+  // native 热重载仅用于开发，生产包必须关闭。
   if (result.native && typeof result.native === 'object') {
     result.native = { ...result.native, autoReload: false };
   }
@@ -145,8 +143,8 @@ function main() {
     if (fs.existsSync(full)) entries.push({ name: logo, data: fs.readFileSync(full) });
   }
 
-  // 3) 前端产物 dist/（本插件没有 lib/：纯前端，无 native cdylib）
-  for (const name of ['dist', 'lib']) {
+  // 3) 面板、接收方页面及平台动态库。
+  for (const name of ['dist', 'web-static', 'lib']) {
     const dir = path.join(root, name);
     if (!fs.existsSync(dir)) continue;
     for (const relative of walk(dir)) {
@@ -163,6 +161,12 @@ function main() {
     throw new Error('插件根目录必须提供 logo.svg');
   }
 
+  if (manifest.native?.enabled && !entries.some(item => /^lib\/(macOS\.dylib|Windows\.dll|Linux\.so)$/.test(item.name))) {
+    throw new Error('native 插件缺少 lib/ 平台库，请先构建 native');
+  }
+  if (manifest.native?.enabled && !entries.some(item => item.name === 'web-static/page_web/index.html')) {
+    throw new Error('文件共享插件缺少手机端页面，请先构建 web-mobile');
+  }
   const output = path.join(outDir, `${packid}-${version}.oplg`);
   fs.writeFileSync(output, zip(entries));
 
@@ -179,7 +183,7 @@ function main() {
     output,
     entries: entries.length,
     totalBytes: entries.reduce((sum, item) => sum + item.data.length, 0),
-    nativeLibs: [],
+    nativeLibs: entries.filter(item => /^lib\/(macOS\.dylib|Windows\.dll|Linux\.so)$/.test(item.name)).map(item => item.name),
   };
   fs.writeFileSync(path.join(outDir, 'meta.json'), `${JSON.stringify(meta, null, 2)}\n`, 'utf8');
   process.stdout.write(`${JSON.stringify(meta)}\n`);

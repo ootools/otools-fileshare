@@ -1,0 +1,4 @@
+packages:
+  - web
+  - web-mobile
+  - vendor/otools-plugin-sdk

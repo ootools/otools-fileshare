@@ -1,0 +1,5 @@
+.flex { display: flex; gap: 12px; }
+.flex-7 { flex: 7; min-width: 0; }
+.flex-3 { flex: 3; min-width: 0; }
+.pl-4 { padding-left: 16px; }
+.pr-4 { padding-right: 16px; }

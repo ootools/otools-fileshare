@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/ootools/OTools",
+  "commit": "6a529eac75967d2b84fb69ec3901ceff98ef8a3c",
+  "paths": ["crates/ot-plugin-ffi", "crates/ot-plugin-state", "crates/ot-storage"],
+  "modified": false,
+  "note": "Host code has no separate license declaration at repository root; retain source provenance and confirm redistribution terms before public release."
+}

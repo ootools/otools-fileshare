@@ -1,11 +1,17 @@
 # 构建产物
-dist/
+/dist/
+# SDK 固定构建快照是源码依赖，必须纳入版本管理。
+!vendor/otools-plugin-sdk/dist/
+!vendor/otools-plugin-sdk/dist/**
 # 本地打包产物（.oplg）
 dist-pack/
 # 前端依赖
 node_modules/
 # Rust native 构建产物
 native/target/
+# Native 宿主路径与前端产物均不入库
+web/dist/
+web-mobile/dist/
 # 上游源码（按 upstream.pin 按需浅拉取，不入库）
 upstream/
 # 手机端页面构建产物（由 native 服务器托管，打包时随包分发）

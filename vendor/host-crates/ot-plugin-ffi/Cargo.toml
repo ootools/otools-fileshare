@@ -1,0 +1,8 @@
+[package]
+name = "ot-plugin-ffi"
+version = "0.1.0"
+description = "Panic-safe FFI boundary helpers for OTools native plugins"
+edition = "2021"
+
+[dependencies]
+serde_json = "1"

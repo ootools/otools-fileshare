@@ -9,16 +9,30 @@ name = "otools_fileshare_native"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["preserve_order"] }
 uuid = { version = "1.0", features = ["v4"] }
 tokio = { version = "1.0", features = ["full"] }
-# 本地开发用宿主仓库的相对 path 依赖；CI（Task 16）必须切换为 git 依赖：
-#   ot-plugin-ffi = { git = "https://github.com/ootools/OTools" }
-ot-plugin-ffi = { path = "../../otools/crates/ot-plugin-ffi" }
-# 插件 K-V 状态（state.json，内部经 ot-storage 落盘到 ~/.otools/local/）
-ot-plugin-state = { path = "../../otools/crates/ot-plugin-state" }
+# 小型宿主 crate 固定快照（来源见 vendor/host-crates/source.json），独立构建无需拉整个宿主。
+ot-plugin-ffi = { path = "../vendor/host-crates/ot-plugin-ffi" }
+ot-plugin-state = { path = "../vendor/host-crates/ot-plugin-state" }
 # uploadPath 默认值 = 系统下载目录；版本对齐 ot-storage 的 dirs = "5.0"
 dirs = "5.0"
+if-addrs = "0.14"
+regex = "1.11"
+hmac = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+rand = "0.8"
+axum = { version = "0.8", features = ["multipart"] }
+tower-http = { version = "0.6", features = ["fs"] }
+tower = { version = "0.5", features = ["util"] }
+tokio-util = { version = "0.7", features = ["io"] }
+futures-util = "0.3"
+async-stream = "0.3"
+serde_urlencoded = "0.7"
+zip = { version = "2.4", default-features = false, features = ["deflate"] }
+percent-encoding = "2.3"
+libc = "0.2"
 
 # 独立插件仓库不是宿主 workspace 的成员，必须自带 profile。
 # FFI panic 安全要求 `panic = "unwind"`（ot-plugin-ffi 的 guard 靠 catch_unwind
