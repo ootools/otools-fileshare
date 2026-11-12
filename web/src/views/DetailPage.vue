@@ -246,7 +246,7 @@ import { store } from "@/store";
 import { successMessage } from "@/utils/message";
 import { t } from "@/i18n";
 import { sharePaths } from '@/api/launch';
-import { pickFiles, pickDirectory } from 'otools-plugin-sdk';
+import { pickFromHostTree } from 'otools-plugin-sdk';
 
 let api = window.api;
 
@@ -318,11 +318,14 @@ export default {
       this.$router.replace('/');
     },
     async pickPaths(directory = false) {
-      // 走 SDK 对话框辅助层：宿主 dialog 注入、plugin:dialog IPC、浏览器回退三层都由它处理。
-      const chosen = directory ? await pickDirectory() : await pickFiles();
-      const paths = Array.isArray(chosen) ? chosen : chosen ? [chosen] : [];
-      if (!paths.length) return;
-      await sharePaths(api, paths, { start: false, username: this.settingForm.ip });
+      // panel 里原生对话框会夺焦收起面板，统一走宿主自绘文件树（webview 内 DOM 弹层）。
+      const result = await pickFromHostTree({
+        directory,
+        multiple: !directory,
+        title: directory ? t('detail.addFolder') : t('detail.addFiles'),
+      });
+      if (result.kind !== 'picked' || !result.paths.length) return;
+      await sharePaths(api, result.paths, { start: false, username: this.settingForm.ip });
       store.files = await api.listFiles();
     },
     async removeFileAll() {

@@ -257,6 +257,7 @@ import { successMessage, errorMessage } from "@/utils/message";
 import { Plus, ArrowRight } from "@element-plus/icons-vue";
 import appLogo from "@/assets/logo.png";
 import { setLocale } from "@/i18n";
+import { pickFromHostTree } from 'otools-plugin-sdk';
 
 let api = window.api;
 
@@ -316,8 +317,9 @@ export default {
       });
     },
     async pickUploadDirectory() {
-      const selected = await pickDirectory();
-      if (selected) { store.settingForm.uploadPath = selected; await this.updateSettingsForm(); }
+      const result = await pickFromHostTree({ directory: true, title: this.$t('setting.chooseDirectory') });
+      const selected = result.paths[0];
+      if (result.kind === 'picked' && selected) { store.settingForm.uploadPath = selected; await this.updateSettingsForm(); }
     },
     openLink(url) {
       api.openExternal(url);
