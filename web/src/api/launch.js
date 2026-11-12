@@ -2,11 +2,12 @@ export function pathName(path) {
   return path.replace(/\\/g, '/').split('/').filter(Boolean).at(-1) || path;
 }
 
-export async function sharePaths(api, paths, { start = true } = {}) {
-  for (const path of new Set(paths.filter(path => typeof path === 'string' && path))) {
-    await api.addFile({ name: pathName(path), path });
+export async function sharePaths(api, paths, { start = true, username } = {}) {
+  const cleaned = [...new Set(paths.filter(path => typeof path === 'string' && path))];
+  for (const path of cleaned) {
+    await api.addFile(username ? { name: pathName(path), path, username } : { name: pathName(path), path });
   }
-  if (start && paths.length && await api.getServerStatus() === 'stop') await api.startServer();
+  if (start && cleaned.length && await api.getServerStatus() === 'stop') await api.startServer();
 }
 
 export async function handleLaunch(api, launch) {

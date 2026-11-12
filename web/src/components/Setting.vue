@@ -316,11 +316,8 @@ export default {
       });
     },
     async pickUploadDirectory() {
-      const host = window.otools || window.utools;
-      const dialog = host?.dialog || host?.runtime?.dialog;
-      if (!dialog?.open) throw new Error('OTools 文件选择不可用');
-      const selected = await dialog.open({ directory: true, multiple: false });
-      if (selected) { store.settingForm.uploadPath = Array.isArray(selected) ? selected[0] : selected; await this.updateSettingsForm(); }
+      const selected = await pickDirectory();
+      if (selected) { store.settingForm.uploadPath = selected; await this.updateSettingsForm(); }
     },
     openLink(url) {
       api.openExternal(url);

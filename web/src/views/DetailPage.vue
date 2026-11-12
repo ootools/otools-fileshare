@@ -245,7 +245,8 @@ import {
 import { store } from "@/store";
 import { successMessage } from "@/utils/message";
 import { t } from "@/i18n";
-import { pathName } from '@/api/launch';
+import { sharePaths } from '@/api/launch';
+import { pickFiles, pickDirectory } from 'otools-plugin-sdk';
 
 let api = window.api;
 
@@ -317,12 +318,11 @@ export default {
       this.$router.replace('/');
     },
     async pickPaths(directory = false) {
-      const host = window.otools || window.utools;
-      const dialog = host?.dialog || host?.runtime?.dialog;
-      if (!dialog?.open) throw new Error('OTools 文件选择不可用');
-      const chosen = await dialog.open({ directory, multiple: !directory, title: directory ? t('detail.addFolder') : t('detail.addFiles') });
+      // 走 SDK 对话框辅助层：宿主 dialog 注入、plugin:dialog IPC、浏览器回退三层都由它处理。
+      const chosen = directory ? await pickDirectory() : await pickFiles();
       const paths = Array.isArray(chosen) ? chosen : chosen ? [chosen] : [];
-      for (const path of paths) await api.addFile({ name: pathName(path), path, username: this.settingForm.ip });
+      if (!paths.length) return;
+      await sharePaths(api, paths, { start: false, username: this.settingForm.ip });
       store.files = await api.listFiles();
     },
     async removeFileAll() {

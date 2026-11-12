@@ -7,6 +7,9 @@ test('file delivery deduplicates paths and starts the stopped server after addin
   const api={ addFile:async file=>calls.push(['add',file]), getServerStatus:async()=> 'stop', startServer:async()=>calls.push(['start']) };
   await sharePaths(api,['/tmp/a.txt','/tmp/a.txt','C:\\Users\\Public\\b.txt']);
   assert.deepEqual(calls,[['add',{name:'a.txt',path:'/tmp/a.txt'}],['add',{name:'b.txt',path:'C:\\Users\\Public\\b.txt'}],['start']]);
+  calls.length=0;
+  await sharePaths(api,['/tmp/c.txt'],{start:false,username:'192.168.1.2'});
+  assert.deepEqual(calls,[['add',{name:'c.txt',path:'/tmp/c.txt',username:'192.168.1.2'}]]);
 });
 
 test('text launch and autoStart preserve upstream entry semantics', async () => {
