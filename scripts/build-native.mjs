@@ -31,8 +31,9 @@ console.log('native 模式：cargo build --release → lib/…');
 // stdin 必须是 'ignore'：某些机器（安全软件挂钩匿名管道）上给子进程接 stdin 管道
 // 会让 CreateProcess 直接 EBUSY（与 build-web.mjs 同因）。
 const build = spawnSync('cargo', ['build', '--release', '--manifest-path', manifest], {
-  stdio: 'inherit',
-  shell: process.platform === 'win32',
+  // stdin 必须忽略：某些机器（安全软件挂钩匿名管道）上给子进程接 stdin 管道
+  // 会让 CreateProcess 直接 EBUSY（与 build-web.mjs 同因）。
+  stdio: ['ignore', 'inherit', 'inherit'],
 });
 if (build.error) {
   console.error(`执行失败：cargo build --release（${build.error.message}）`);
