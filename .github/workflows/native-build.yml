@@ -14,7 +14,7 @@ jobs:
         include:
           - { os: windows-latest, artifact: windows, name: Windows.dll, source: otools_fileshare_native.dll }
           - { os: ubuntu-latest, artifact: linux, name: Linux.so, source: libotools_fileshare_native.so }
-          - { os: macos-latest, artifact: macos-arm64, name: macOS-arm64.dylib, source: libotools_fileshare_native.dylib }
+          - { os: macos-14, artifact: macos-arm64, name: macOS-arm64.dylib, source: libotools_fileshare_native.dylib }
           - { os: macos-15-intel, artifact: macos-x86_64, name: macOS-x86_64.dylib, source: libotools_fileshare_native.dylib }
     runs-on: ${{ matrix.os }}
     steps:
