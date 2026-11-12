@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>otools-fileshare</title>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #1b1d22; color: #e6e6e6;
+      font: 14px/1.6 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    main { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; box-sizing: border-box; text-align: center; }
+    h1 { margin: 0; font-size: 22px; font-weight: 600; }
+    p { margin: 0; color: #9aa0a6; max-width: 560px; }
+    #bridge { color: #7ee787; }
+  </style>
+  <script>
+    /*
+     * OTools 宿主桥占位（scaffold）。
+     * 后续任务（面板搬运）会把这里换成完整桥：业务一律走
+     * window.otools.invokeNative('<method>', payload)，事件走
+     * window.otools.listenNative(handler)。此空壳仅保证入口页可加载、
+     * 可被 verify-plugin 的宿主桥检查识别。
+     */
+    window.otoolsPlugin = {
+      available: function () {
+        return typeof window !== 'undefined' && Boolean(window.otools);
+      },
+    };
+  </script>
+</head>
+<body>
+  <main>
+    <h1>📡 otools-fileshare scaffold</h1>
+    <p>占位页：OTools 局域网文件共享插件脚手架（移植自 cky-thinker/file-share）。后续任务将在此接入 Vue 面板与 Rust native 服务。</p>
+    <p id="bridge">…</p>
+  </main>
+  <script>
+    document.getElementById('bridge').textContent = window.otoolsPlugin.available()
+      ? 'OTools 宿主桥可用'
+      : '未检测到 OTools 宿主（浏览器直接打开仅作预览）';
+  </script>
+</body>
+</html>

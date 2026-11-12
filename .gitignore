@@ -1,0 +1,17 @@
+# 构建产物
+dist/
+# 本地打包产物（.oplg）
+dist-pack/
+# 前端依赖
+node_modules/
+# Rust native 构建产物
+native/target/
+# 上游源码（按 upstream.pin 按需浅拉取，不入库）
+upstream/
+# 手机端页面构建产物（由 native 服务器托管，打包时随包分发）
+web-static/
+# native 平台库（CI / build-native.mjs 产物，不入库）
+lib/*.dylib
+lib/*.dll
+lib/*.so
+.DS_Store
