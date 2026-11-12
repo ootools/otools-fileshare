@@ -1,0 +1,25 @@
+[package]
+name = "otools-fileshare-native"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "otools_fileshare_native"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4"] }
+tokio = { version = "1.0", features = ["full"] }
+# 本地开发用宿主仓库的相对 path 依赖；CI（Task 16）必须切换为 git 依赖：
+#   ot-plugin-ffi = { git = "https://github.com/ootools/OTools" }
+ot-plugin-ffi = { path = "../../otools/crates/ot-plugin-ffi" }
+
+# 独立插件仓库不是宿主 workspace 的成员，必须自带 profile。
+# FFI panic 安全要求 `panic = "unwind"`（ot-plugin-ffi 的 guard 靠 catch_unwind
+# 把插件内 panic 转成错误包；panic=abort 会让宿主整个进程被杀）。
+[workspace]
+
+[profile.release]
+panic = "unwind"
