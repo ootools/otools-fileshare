@@ -93,7 +93,19 @@ function main() {
   // 摘要清单必须刚好覆盖这三个文件
   const sumsPath = path.join(directory, 'SHA256SUMS');
   if (!fs.existsSync(sumsPath)) fail('缺少 SHA256SUMS');
-  const filename = `${packid}-${version}.oplg`;
+  // 包文件名：主包 <packid>-<version>.oplg；分平台/分架构包从 meta.json 的
+  // output 取真实文件名（如 <packid>-<version>-windows-arm.oplg）。
+  let filename = `${packid}-${version}.oplg`;
+  const metaPath = path.join(directory, 'meta.json');
+  if (fs.existsSync(metaPath)) {
+    try {
+      const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+      const outputName = path.basename(String(meta.output || ''));
+      if (outputName.endsWith('.oplg')) filename = outputName;
+    } catch {
+      // meta.json 损坏时回退主包名，后面的 SHA256SUMS/CRC 校验会兜住
+    }
+  }
   const expected = new Set([filename, 'plugin.json', 'logo.svg']);
   const checksums = new Map();
   for (const line of fs.readFileSync(sumsPath, 'utf8').split('\n').filter(Boolean)) {

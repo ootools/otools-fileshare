@@ -81,7 +81,7 @@ export function validateAuthConfig(mode,env) {
   } else throw new Error('未知发布认证方式');
   if (env.OTOOLS_MARKET_API) httpsUrl(env.OTOOLS_MARKET_API);
 }
-export function marketPayload(manifest,repo,tag,version) {
+export function marketPayload(manifest,repo,tag,version,extras={}) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo || '')) throw new Error('GitHub 仓库名称无效');
   const base=`https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}`;
   // logo 不能用 Release 资产下载链：GitHub 会 302 到
@@ -90,7 +90,23 @@ export function marketPayload(manifest,repo,tag,version) {
   // 改用 raw.githubusercontent.com 上同一 tag 的仓库文件：返回 image/svg+xml，
   // 可直接渲染，且随 tag 固定不会漂移。
   const logo=`https://raw.githubusercontent.com/${repo}/${encodeURIComponent(tag)}/logo.svg`;
-  return {...productionManifest(manifest,version),packageUrl:`${base}/${manifest.packid}-${version}.oplg`,logo};
+  const payload={...productionManifest(manifest,version),packageUrl:`${base}/${manifest.packid}-${version}.oplg`,logo};
+  // 分平台/分架构专用包为 opt-in：只有发布流水线确认这些资产已随 Release
+  // 上传时才声明（PLATFORM_PACKAGES=1），否则不带字段、合包 packageUrl 兜底。
+  if (extras.platformPackages) {
+    for (const [field, suffix] of [
+      ['packageUrlWindows', '-windows'],
+      ['packageUrlMacos', '-macos'],
+      ['packageUrlLinux', '-linux'],
+      ['packageUrlMacosIntel', '-macos-intel'],
+      ['packageUrlWindowsArm', '-windows-arm'],
+      ['packageUrlLinuxArm', '-linux-arm'],
+    ]) {
+      payload[field]=`${base}/${manifest.packid}-${version}${suffix}.oplg`;
+    }
+    payload.packageMode=1;
+  }
+  return payload;
 }
 export async function publishMarket(url,access,payload,fetcher=fetch) {
   const result=await jsonRequest(fetcher,url,{method:'POST',headers:{Authorization:`Bearer ${token(access)}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -113,7 +129,7 @@ async function main() {
   validateAuthConfig(env.AUTH_MODE,env);
   const access=await credential(env.AUTH_MODE,env);
   await publishMarket(env.OTOOLS_MARKET_API || 'https://otools-api.lingyun.net/api/v1/otools/plugin/publish',access,
-    marketPayload(manifest,env.GITHUB_REPOSITORY,env.RELEASE_TAG,env.RELEASE_VERSION));
+    marketPayload(manifest,env.GITHUB_REPOSITORY,env.RELEASE_TAG,env.RELEASE_VERSION,{platformPackages: env.PLATFORM_PACKAGES === '1'}));
   console.log('插件市场已确认发布成功');
 }
 if (process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {

@@ -131,6 +131,41 @@ function main() {
   const manifest = productionManifest(source, arg('version', source.version));
   const { version, packid } = manifest;
 
+  // 分平台/分架构打包（与宿主 plugin_pack.py --native-platform 同思路）：
+  //   --platform windows|linux|macos  必须与 --arch 搭配；缺省 = 三平台合包（兜底）
+  //   --arch    x64|arm64             macOS 包必须显式二选一（arm64 → -macos，x64 → -macos-intel）
+  // lib/ 源文件约定名：macOS-arm64.dylib / macOS-x86_64.dylib / Windows-x64.dll /
+  //                    Windows-arm64.dll / Linux-x64.so / Linux-arm64.so
+  // （CI native matrix 与本地 build-native.mjs --arch 统一产出；包内一律改回
+  //  宿主默认名 lib/macOS.dylib / lib/Windows.dll / lib/Linux.so，宿主按平台取用。）
+  const platform = (arg('platform', '') || '').toLowerCase();
+  const arch = (arg('arch', '') || '').toLowerCase();
+  const platformVariants = {
+    macos: {
+      arches: { arm64: { source: 'macOS-arm64.dylib', entry: 'lib/macOS.dylib', suffix: '-macos' }, x64: { source: 'macOS-x86_64.dylib', entry: 'lib/macOS.dylib', suffix: '-macos-intel' } },
+      defaultArch: null,
+    },
+    windows: {
+      arches: { x64: { source: 'Windows-x64.dll', entry: 'lib/Windows.dll', suffix: '-windows' }, arm64: { source: 'Windows-arm64.dll', entry: 'lib/Windows.dll', suffix: '-windows-arm' } },
+      defaultArch: 'x64',
+    },
+    linux: {
+      arches: { x64: { source: 'Linux-x64.so', entry: 'lib/Linux.so', suffix: '-linux' }, arm64: { source: 'Linux-arm64.so', entry: 'lib/Linux.so', suffix: '-linux-arm' } },
+      defaultArch: 'x64',
+    },
+  };
+  let variant = null;
+  if (platform) {
+    const definition = platformVariants[platform];
+    if (!definition) throw new Error(`未知 --platform：${platform}（支持 windows/linux/macos）`);
+    const resolvedArch = arch || definition.defaultArch;
+    variant = resolvedArch ? definition.arches[resolvedArch] : null;
+    if (!variant) throw new Error(`平台 ${platform} 需要 --arch（支持 ${Object.keys(definition.arches).join('/')}）`);
+    if (!fs.existsSync(path.join(root, 'lib', variant.source))) {
+      throw new Error(`lib/${variant.source} 不存在（请先用 build-native.mjs --arch 或 CI 产出对应架构库）`);
+    }
+  }
+  const outputSuffix = variant ? variant.suffix : '';
   const outDir = path.join(root, arg('out', 'dist-pack'));
   fs.mkdirSync(outDir, { recursive: true });
 
@@ -143,12 +178,22 @@ function main() {
     if (fs.existsSync(full)) entries.push({ name: logo, data: fs.readFileSync(full) });
   }
 
-  // 3) 面板、接收方页面及平台动态库。
-  for (const name of ['dist', 'web-static', 'lib']) {
+  // 3) 面板、接收方页面及平台动态库。合包带全部 lib/；单架构包只带匹配
+  //    本平台/架构的那一个库（包内改名回宿主默认名）。
+  for (const name of ['dist', 'web-static']) {
     const dir = path.join(root, name);
     if (!fs.existsSync(dir)) continue;
     for (const relative of walk(dir)) {
       entries.push({ name: `${name}/${relative}`, data: fs.readFileSync(path.join(dir, relative)) });
+    }
+  }
+  if (variant) {
+    entries.push({ name: variant.entry, data: fs.readFileSync(path.join(root, 'lib', variant.source)) });
+  } else {
+    // 合包只收宿主默认名三件套；带架构后缀的源文件只服务单架构打包。
+    for (const name of ['macOS.dylib', 'Windows.dll', 'Linux.so']) {
+      const full = path.join(root, 'lib', name);
+      if (fs.existsSync(full)) entries.push({ name: `lib/${name}`, data: fs.readFileSync(full) });
     }
   }
 
@@ -167,15 +212,19 @@ function main() {
   if (manifest.native?.enabled && !entries.some(item => item.name === 'web-static/page_web/index.html')) {
     throw new Error('文件共享插件缺少手机端页面，请先构建 web-mobile');
   }
-  const output = path.join(outDir, `${packid}-${version}.oplg`);
+  // 发布目录统一扁平结构：oplg + plugin.json + logo.svg + 摘要 + 元信息。
+  // 单架构包放 dist-pack/<variant>/ 子目录，与合包互不覆盖。
+  const releaseSuffix = outputSuffix ? `${outputSuffix.slice(1)}/` : '';
+  const artifactDir = path.join(outDir, releaseSuffix);
+  fs.mkdirSync(artifactDir, { recursive: true });
+  const output = path.join(artifactDir, `${packid}-${version}${outputSuffix}.oplg`);
   fs.writeFileSync(output, zip(entries));
 
-  // 发布目录统一扁平结构：oplg + plugin.json + logo.svg + 摘要 + 元信息
-  fs.writeFileSync(path.join(outDir, 'plugin.json'), entries[0].data);
-  fs.copyFileSync(path.join(root, 'logo.svg'), path.join(outDir, 'logo.svg'));
+  fs.writeFileSync(path.join(artifactDir, 'plugin.json'), entries[0].data);
+  fs.copyFileSync(path.join(root, 'logo.svg'), path.join(artifactDir, 'logo.svg'));
   const releaseFiles = [path.basename(output), 'plugin.json', 'logo.svg'];
-  const sums = releaseFiles.map((name) => `${createHash('sha256').update(fs.readFileSync(path.join(outDir, name))).digest('hex')}  ${name}`);
-  fs.writeFileSync(path.join(outDir, 'SHA256SUMS'), `${sums.join('\n')}\n`);
+  const sums = releaseFiles.map((name) => `${createHash('sha256').update(fs.readFileSync(path.join(artifactDir, name))).digest('hex')}  ${name}`);
+  fs.writeFileSync(path.join(artifactDir, 'SHA256SUMS'), `${sums.join('\n')}\n`);
   const meta = {
     packid,
     uuid: manifest.uuid,
@@ -184,8 +233,9 @@ function main() {
     entries: entries.length,
     totalBytes: entries.reduce((sum, item) => sum + item.data.length, 0),
     nativeLibs: entries.filter(item => /^lib\/(macOS\.dylib|Windows\.dll|Linux\.so)$/.test(item.name)).map(item => item.name),
+    ...(variant ? { platform, arch: arch || undefined, resolvedArch: arch || platformVariants[platform].defaultArch } : {}),
   };
-  fs.writeFileSync(path.join(outDir, 'meta.json'), `${JSON.stringify(meta, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(path.join(artifactDir, 'meta.json'), `${JSON.stringify(meta, null, 2)}\n`, 'utf8');
   process.stdout.write(`${JSON.stringify(meta)}\n`);
 }
 

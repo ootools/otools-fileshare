@@ -29,6 +29,19 @@ test('market payload uses actual packageUrl and a renderable raw logo field',()=
   assert.equal(p.packageUrl,'https://github.com/owner/repo/releases/download/v1.0.0/plugin-a-1.0.0.oplg');
   // logo 必须走 raw.githubusercontent.com：Release 资产链是 octet-stream+attachment，<img> 拒载
   assert.equal(p.logo,'https://raw.githubusercontent.com/owner/repo/v1.0.0/logo.svg');
+  // 默认不带分平台字段：其它纯前端插件沿用本脚本时不声明不存在的资产
+  assert.equal(p.packageUrlWindows,undefined);
+  assert.equal(p.packageMode,undefined);
+});
+
+test('platform packages opt-in declares every per-arch asset and packageMode',()=>{
+  const p=marketPayload({packid:'plugin-a',uuid:'plugin-a',version:'1.2.0',entry:'dist/index.html'},'owner/repo','v1.2.0','1.2.0',{platformPackages:true});
+  assert.equal(p.packageUrl,'https://github.com/owner/repo/releases/download/v1.2.0/plugin-a-1.2.0.oplg');
+  for (const [field, suffix] of [
+    ['packageUrlWindows','-windows'],['packageUrlMacos','-macos'],['packageUrlLinux','-linux'],
+    ['packageUrlMacosIntel','-macos-intel'],['packageUrlWindowsArm','-windows-arm'],['packageUrlLinuxArm','-linux-arm'],
+  ]) assert.equal(p[field],`https://github.com/owner/repo/releases/download/v1.2.0/plugin-a-1.2.0${suffix}.oplg`);
+  assert.equal(p.packageMode,1);
 });
 test('version inputs cannot inject shell or publish a mismatched tag',()=>{
   assert.throws(()=>releaseMeta({packid:'a',version:'1.0.0'},'1.0.0; echo bad',''));

@@ -53,13 +53,31 @@ jobs:
           pattern: plugin-native-*
           path: lib
           merge-multiple: true
-      - name: Create macOS universal2 library
+      - name: Pack per-arch bundles (mac intel / windows arm / linux arm included)
         run: |
+          # 先打 6 个单架构包（lib/ 里是 6 个带架构名的源库），
+          # 产物落在 dist-pack/<variant>/ 子目录，各自带 SHA256SUMS。
+          node scripts/pack-plugin.mjs --platform windows --arch x64    --out dist-pack
+          node scripts/pack-plugin.mjs --platform windows --arch arm64  --out dist-pack
+          node scripts/pack-plugin.mjs --platform linux   --arch x64    --out dist-pack
+          node scripts/pack-plugin.mjs --platform linux   --arch arm64  --out dist-pack
+          node scripts/pack-plugin.mjs --platform macos   --arch arm64  --out dist-pack
+          node scripts/pack-plugin.mjs --platform macos   --arch x64    --out dist-pack
+          for dir in dist-pack/*/; do
+            [ -d "$dir" ] || continue
+            node scripts/verify-plugin.mjs "$dir"
+          done
+      - name: Pack combined bundle (fallback for every platform)
+        run: |
+          # 合包兜底：universal2 macOS + Windows x64 + Linux x64。
+          # 收紧 lib/ 只留宿主默认名三件套，避免带架构源库混入。
           lipo -create lib/macOS-arm64.dylib lib/macOS-x86_64.dylib -output lib/macOS.dylib
           codesign --force --sign - --timestamp=none lib/macOS.dylib
-          rm lib/macOS-arm64.dylib lib/macOS-x86_64.dylib
-      - run: node scripts/pack-plugin.mjs
-      - run: node scripts/verify-plugin.mjs dist-pack
+          cp lib/Windows-x64.dll lib/Windows.dll
+          cp lib/Linux-x64.so lib/Linux.so
+          rm -f lib/macOS-arm64.dylib lib/macOS-x86_64.dylib lib/Windows-arm64.dll lib/Windows-x64.dll lib/Linux-arm64.so lib/Linux-x64.so
+          node scripts/pack-plugin.mjs --out dist-pack
+          node scripts/verify-plugin.mjs dist-pack
       - uses: actions/upload-artifact@v4
         with:
           name: oplg
