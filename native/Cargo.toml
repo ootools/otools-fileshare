@@ -15,6 +15,10 @@ tokio = { version = "1.0", features = ["full"] }
 # 本地开发用宿主仓库的相对 path 依赖；CI（Task 16）必须切换为 git 依赖：
 #   ot-plugin-ffi = { git = "https://github.com/ootools/OTools" }
 ot-plugin-ffi = { path = "../../otools/crates/ot-plugin-ffi" }
+# 插件 K-V 状态（state.json，内部经 ot-storage 落盘到 ~/.otools/local/）
+ot-plugin-state = { path = "../../otools/crates/ot-plugin-state" }
+# uploadPath 默认值 = 系统下载目录；版本对齐 ot-storage 的 dirs = "5.0"
+dirs = "5.0"
 
 # 独立插件仓库不是宿主 workspace 的成员，必须自带 profile。
 # FFI panic 安全要求 `panic = "unwind"`（ot-plugin-ffi 的 guard 靠 catch_unwind
