@@ -75,7 +75,8 @@ if (!rustMode) {
   const builtWithPackageManager = fs.existsSync(webPackageJson);
   if (builtWithPackageManager) {
     console.log('web 模式：检测到 web/package.json，在 web/ 里跑 pnpm run build（outDir 固定 ../dist）…');
-    const status = run(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['run', 'build'], { cwd: webDir });
+    // Windows 的 .cmd 批处理必须经 shell 执行（Node ≥18.20 起 spawnSync 直接跑 .cmd 会 EINVAL）
+    const status = run(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['run', 'build'], { cwd: webDir, shell: process.platform === 'win32' });
     if (status !== 0) {
       console.error('web/ 前端构建失败（pnpm run build）。');
       process.exit(status);
