@@ -8,12 +8,12 @@ const OTOOLS_LOCAL_DATA_DIR: &str = "local";
 const OTOOLS_LOGS_DIR: &str = "logs";
 
 fn home_dir() -> PathBuf {
-    // 本插件快照补丁：OTOOLS_HOME 供测试隔离落盘根。
-    // Windows 上 dirs::home_dir() 走系统用户目录、不读 HOME，仅设 HOME 无法隔离。
+    // OTOOLS_HOME 供宿主/插件测试隔离落盘根：Windows 上 dirs::home_dir() 走
+    // 系统用户目录、不读 HOME，仅设 HOME 无法隔离 ~/.otools 下的 state.json。
     std::env::var_os("OTOOLS_HOME")
         .map(PathBuf::from)
         .filter(|path| !path.as_os_str().is_empty())
-        .or_else(|| dirs::home_dir())
+        .or_else(dirs::home_dir)
         .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
         .unwrap_or_else(|| PathBuf::from("."))
 }
@@ -89,4 +89,23 @@ pub fn write_json_file<T: Serialize + ?Sized>(path: &Path, value: &T) -> Result<
 pub fn write_text_file(path: &Path, content: &str) -> Result<(), String> {
     ensure_parent_dir(path)?;
     fs::write(path, content).map_err(|error| format!("写入文件失败({}): {}", path.display(), error))
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn otools_home_env_overrides_storage_root() {
+        let original = std::env::var_os("OTOOLS_HOME");
+        let temporary =
+            std::env::temp_dir().join(format!("ot-storage-home-test-{}", std::process::id()));
+        std::fs::create_dir_all(&temporary).unwrap();
+        std::env::set_var("OTOOLS_HOME", &temporary);
+        assert_eq!(super::home_dir(), temporary);
+        assert_eq!(super::otools_local_dir(), temporary.join(".otools/local"));
+        match original {
+            Some(value) => std::env::set_var("OTOOLS_HOME", value),
+            None => std::env::remove_var("OTOOLS_HOME"),
+        }
+        let _ = std::fs::remove_dir_all(&temporary);
+    }
 }

@@ -1,15 +1,7 @@
 {
   "repository": "https://github.com/ootools/OTools",
-  "commit": "6a529eac75967d2b84fb69ec3901ceff98ef8a3c",
+  "commit": "2baa76c24db690e7f99ace3e0d69681d52f051dd",
   "paths": ["crates/ot-plugin-ffi", "crates/ot-plugin-state", "crates/ot-storage"],
-  "modified": true,
-  "patches": [
-    {
-      "file": "ot-storage/src/lib.rs",
-      "change": "home_dir() 增加 OTOOLS_HOME 环境变量优先覆盖",
-      "reason": "Windows 上 dirs::home_dir() 走系统用户目录不读 HOME，插件测试无法隔离 state.json；对宿主为无害增强，建议回馈上游",
-      "upstream_patch_candidate": true
-    }
-  ],
-  "note": "Host code has no separate license declaration at repository root; retain source provenance and confirm redistribution terms before public release."
+  "modified": false,
+  "note": "Unmodified host snapshots. OTOOLS_HOME storage-root override（ot-storage home_dir 优先读该变量）已合入上游 ot-storage；宿主根无独立许可声明，公开再分发前确认条款。"
 }
