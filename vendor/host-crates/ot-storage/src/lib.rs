@@ -8,7 +8,12 @@ const OTOOLS_LOCAL_DATA_DIR: &str = "local";
 const OTOOLS_LOGS_DIR: &str = "logs";
 
 fn home_dir() -> PathBuf {
-    dirs::home_dir()
+    // 本插件快照补丁：OTOOLS_HOME 供测试隔离落盘根。
+    // Windows 上 dirs::home_dir() 走系统用户目录、不读 HOME，仅设 HOME 无法隔离。
+    std::env::var_os("OTOOLS_HOME")
+        .map(PathBuf::from)
+        .filter(|path| !path.as_os_str().is_empty())
+        .or_else(|| dirs::home_dir())
         .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
         .unwrap_or_else(|| PathBuf::from("."))
 }

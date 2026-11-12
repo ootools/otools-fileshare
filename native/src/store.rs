@@ -102,6 +102,7 @@ pub(crate) mod test_support {
     pub(crate) fn with_test_home<T>(f: impl FnOnce(&Path) -> T) -> T {
         let guard: MutexGuard<'_, ()> = HOME_LOCK.lock().unwrap_or_else(|p| p.into_inner());
         let old_home = std::env::var_os("HOME");
+        let old_otools_home = std::env::var_os("OTOOLS_HOME");
         let home: PathBuf = std::env::temp_dir().join(format!(
             "otools-fileshare-test-{}-{}",
             std::process::id(),
@@ -109,6 +110,9 @@ pub(crate) mod test_support {
         ));
         std::fs::create_dir_all(&home).expect("创建测试 HOME 失败");
         std::env::set_var("HOME", &home);
+        // OTOOLS_HOME 是本插件 ot-storage 快照补丁的落盘根覆盖：
+        // Windows 上 dirs::home_dir() 不读 HOME，只有它能在全平台隔离 state.json。
+        std::env::set_var("OTOOLS_HOME", &home);
         // 运行时态（setting 的 curIp 覆盖）一并隔离，避免用例间串扰。
         crate::setting::test_reset_cur_ip();
         crate::test_reset_shutdown_gate();
@@ -116,6 +120,10 @@ pub(crate) mod test_support {
         match old_home {
             Some(value) => std::env::set_var("HOME", value),
             None => std::env::remove_var("HOME"),
+        }
+        match old_otools_home {
+            Some(value) => std::env::set_var("OTOOLS_HOME", value),
+            None => std::env::remove_var("OTOOLS_HOME"),
         }
         drop(guard);
         let _ = std::fs::remove_dir_all(&home);

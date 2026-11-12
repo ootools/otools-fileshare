@@ -24,7 +24,7 @@ the upstream project remains the origin of all ported design and UI.
 
 ## OTools host support crates and SDK
 
-- `vendor/host-crates/`: unmodified `ot-plugin-ffi`, `ot-plugin-state`, and `ot-storage`, from `ootools/OTools` commit `6a529eac75967d2b84fb69ec3901ceff98ef8a3c` (details in `source.json`). These remain OTools host code, not newly relicensed by this repository's Apache-2.0 LICENSE. The host snapshot does not declare a root license: confirm public redistribution terms before publishing.
+- `vendor/host-crates/`: `ot-plugin-ffi` and `ot-plugin-state` unmodified; `ot-storage` carries one local patch (OTOOLS_HOME env override in `home_dir()`, needed for cross-platform test isolation — see `source.json`), from `ootools/OTools` commit `6a529eac75967d2b84fb69ec3901ceff98ef8a3c`. These remain OTools host code, not newly relicensed by this repository's Apache-2.0 LICENSE. The host snapshot does not declare a root license: confirm public redistribution terms before publishing.
 - `vendor/otools-plugin-sdk/`: existing built SDK snapshot reused from this workspace; its own LICENSE applies (included).
 - Vue, Element Plus, Vite, qrcode.vue and other dependencies retain their original licenses; see the pnpm lockfile and each installed package's license.
 - Upstream DancingScript font is retained as supplied with file-share; confirm its font attribution and redistribution terms before a public release.

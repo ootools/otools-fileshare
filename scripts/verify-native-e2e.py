@@ -26,6 +26,7 @@ def main():
         home = root / "ffi-home"
         home.mkdir()
         os.environ["HOME"] = str(home)
+        os.environ["OTOOLS_HOME"] = str(home)
         installed = (root / "plugin").resolve()
         installed.mkdir()
         with zipfile.ZipFile(package) as archive:
