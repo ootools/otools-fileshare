@@ -1,14 +1,16 @@
-function o() {
-  return typeof window > "u" ? "unknown" : window.otools?.getAppVersion?.() ?? window.utools?.getAppVersion?.() ?? window.__OToolsEnv?.appVersion ?? "unknown";
+function w() {
+  var o, e, n, t, i;
+  return typeof window > "u" ? "unknown" : ((e = (o = window.otools) == null ? void 0 : o.getAppVersion) == null ? void 0 : e.call(o)) ?? ((t = (n = window.utools) == null ? void 0 : n.getAppVersion) == null ? void 0 : t.call(n)) ?? ((i = window.__OToolsEnv) == null ? void 0 : i.appVersion) ?? "unknown";
 }
-async function n() {
-  return o();
+async function r() {
+  return w();
 }
-async function e() {
-  return typeof window > "u" ? "OTools" : window.otools?.getAppName?.() ?? window.utools?.getAppName?.() ?? window.__OToolsEnv?.appName ?? "OTools";
+async function s() {
+  var o, e, n, t, i;
+  return typeof window > "u" ? "OTools" : ((e = (o = window.otools) == null ? void 0 : o.getAppName) == null ? void 0 : e.call(o)) ?? ((t = (n = window.utools) == null ? void 0 : n.getAppName) == null ? void 0 : t.call(n)) ?? ((i = window.__OToolsEnv) == null ? void 0 : i.appName) ?? "OTools";
 }
 export {
-  e as getName,
-  n as getVersion
+  s as getName,
+  r as getVersion
 };
 //# sourceMappingURL=tauri-app-shim.js.map

@@ -1,25 +1,25 @@
-const r = "__OTOOLS_POPUP_MANAGER__", f = "data-otools-popup-id", b = "data-otools-popup-target", h = "data-otools-popup-label", w = "data-otools-popup-window-id";
-function x(e, t) {
+const i = "__OTOOLS_POPUP_MANAGER__", f = "data-otools-popup-id", b = "data-otools-popup-target", h = "data-otools-popup-label", w = "data-otools-popup-window-id";
+function x(o, t) {
   try {
-    return new URL(e).toString();
+    return new URL(o).toString();
   } catch {
-    return new URL(e, t.location.href).toString();
+    return new URL(o, t.location.href).toString();
   }
 }
-function P() {
+function g() {
   if (typeof window > "u") return;
-  const e = window.frameElement, t = e?.dataset.otoolsPopupLabel, o = e?.dataset.otoolsPopupWindowId;
-  return t && o ? { label: t, windowId: o } : void 0;
+  const o = window.frameElement, t = o == null ? void 0 : o.dataset.otoolsPopupLabel, e = o == null ? void 0 : o.dataset.otoolsPopupWindowId;
+  return t && e ? { label: t, windowId: e } : void 0;
 }
-class m {
+class P {
   constructor(t) {
     this.owner = t, this.sequence = 0, this.popups = /* @__PURE__ */ new Map();
   }
-  open(t, o, i, s, p) {
+  open(t, e, p, s, r) {
     if (typeof window > "u")
       return;
-    const d = `otools-popup-${++this.sequence}`, a = this.owner.document, l = a.createElement("div");
-    l.setAttribute(f, d), l.style.cssText = [
+    const d = `otools-popup-${++this.sequence}`, l = this.owner.document, c = l.createElement("div");
+    c.setAttribute(f, d), c.style.cssText = [
       "position:fixed",
       "inset:0",
       "z-index:2147483647",
@@ -30,8 +30,8 @@ class m {
       "background:rgba(15,23,42,0.45)",
       "backdrop-filter:blur(6px)"
     ].join(";");
-    const u = a.createElement("div");
-    u.style.cssText = [
+    const a = l.createElement("div");
+    a.style.cssText = [
       "position:relative",
       "display:flex",
       "flex-direction:column",
@@ -43,8 +43,8 @@ class m {
       "background:#ffffff",
       "box-shadow:0 24px 80px rgba(15,23,42,0.28)"
     ].join(";");
-    const c = a.createElement("button");
-    c.type = "button", c.textContent = "Close", c.style.cssText = [
+    const u = l.createElement("button");
+    u.type = "button", u.textContent = "Close", u.style.cssText = [
       "position:absolute",
       "top:12px",
       "right:12px",
@@ -55,46 +55,46 @@ class m {
       "background:rgba(15,23,42,0.72)",
       "color:#ffffff",
       "cursor:pointer"
-    ].join(";"), c.addEventListener("click", () => {
+    ].join(";"), u.addEventListener("click", () => {
       this.close(d);
     });
-    const n = a.createElement("iframe");
-    return n[r] = this, n.setAttribute(b, o ?? "popup"), n.dataset.otoolsPopupId = d, s !== void 0 && (n.setAttribute(h, s), n.setAttribute(w, p ?? s)), n.src = x(t, this.owner), n.style.cssText = [
+    const n = l.createElement("iframe");
+    return n[i] = this, n.setAttribute(b, e ?? "popup"), n.dataset.otoolsPopupId = d, s !== void 0 && (n.setAttribute(h, s), n.setAttribute(w, r ?? s)), n.src = x(t, this.owner), n.style.cssText = [
       "width:100%",
       "height:100%",
       "border:0",
       "background:#ffffff"
-    ].join(";"), u.append(c, n), l.append(u), a.body.append(l), this.popups.set(d, { root: l, label: s, windowId: p }), d;
+    ].join(";"), a.append(u, n), c.append(a), l.body.append(c), this.popups.set(d, { root: c, label: s, windowId: r }), d;
   }
   getAll() {
-    return Array.from(this.popups, ([t, o]) => ({ id: t, label: o.label, windowId: o.windowId ?? o.label })).filter((t) => t.label !== void 0);
+    return Array.from(this.popups, ([t, e]) => ({ id: t, label: e.label, windowId: e.windowId ?? e.label })).filter((t) => t.label !== void 0);
   }
   closeLabel(t) {
-    for (const [o, i] of this.popups)
-      i.label === t && this.close(o);
+    for (const [e, p] of this.popups)
+      p.label === t && this.close(e);
   }
   close(t) {
-    const o = this.popups.get(t);
-    o && (o.root.remove(), this.popups.delete(t));
+    const e = this.popups.get(t);
+    e && (e.root.remove(), this.popups.delete(t));
   }
   closeCurrent(t = this.owner) {
-    const i = t.frameElement?.dataset.otoolsPopupId;
-    if (i) {
-      this.close(i);
+    const e = t.frameElement, p = e == null ? void 0 : e.dataset.otoolsPopupId;
+    if (p) {
+      this.close(p);
       return;
     }
-    const s = Array.from(this.popups.keys()), p = s[s.length - 1];
-    p && this.close(p);
+    const s = Array.from(this.popups.keys()), r = s[s.length - 1];
+    r && this.close(r);
   }
 }
-function g() {
-  const e = window;
-  if (e[r]) return e[r];
-  const t = e.frameElement;
-  return t?.[r] ? t[r] : (e[r] = new m(e), e[r]);
+function y() {
+  const o = window;
+  if (o[i]) return o[i];
+  const t = o.frameElement;
+  return t != null && t[i] ? t[i] : (o[i] = new P(o), o[i]);
 }
 export {
-  g as ensurePopupManager,
-  P as resolvePopupWindowIdentity
+  y as ensurePopupManager,
+  g as resolvePopupWindowIdentity
 };
 //# sourceMappingURL=popup-manager.js.map

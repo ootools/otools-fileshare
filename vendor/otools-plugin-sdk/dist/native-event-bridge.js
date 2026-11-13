@@ -1,95 +1,98 @@
 const c = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map();
-let b = 0, f = 0, i = null;
-function d() {
+let d = 0, f = 0, i = null;
+function b() {
   if (!(typeof window > "u"))
     return window.otools ?? window.utools;
 }
-function g(t) {
-  const e = t && typeof t == "object" && "payload" in t ? t.payload : t;
-  if (!e || typeof e != "object")
+function _(e) {
+  const t = e && typeof e == "object" && "payload" in e ? e.payload : e;
+  if (!t || typeof t != "object")
     return null;
-  const n = e.topic;
+  const n = t.topic;
   return typeof n != "string" || !n ? null : {
     topic: n,
-    payload: e.payload ?? null
+    payload: t.payload ?? null
   };
 }
-function _(t) {
-  const e = o.get(t.topic);
-  if (e)
-    for (const n of e.values())
-      n(t.payload);
+function m(e) {
+  const t = o.get(e.topic);
+  if (t)
+    for (const n of t.values())
+      n(e.payload);
 }
 async function p() {
   if (i)
     return i;
-  const t = d();
-  return t?.listenNative ? (i = t.listenNative((e) => {
-    const n = g(e);
-    n && _(n);
+  const e = b();
+  return e != null && e.listenNative ? (i = e.listenNative((t) => {
+    const n = _(t);
+    n && m(n);
   }), i) : (i = Promise.resolve(async () => {
   }), i);
 }
-async function m() {
+async function N() {
   if (o.size > 0 || !i)
     return;
-  const t = await i;
-  i = null, await t();
+  const e = await i;
+  i = null, await e();
 }
-function N(t) {
-  const e = r.get(t) ?? 0;
-  r.set(t, e + 1);
+function v(e) {
+  const t = r.get(e) ?? 0;
+  r.set(e, t + 1);
 }
-function v(t) {
-  const e = r.get(t);
-  if (!e || e <= 1) {
-    r.delete(t), c.delete(t);
+function g(e) {
+  const t = r.get(e);
+  if (!t || t <= 1) {
+    r.delete(e), c.delete(e);
     return;
   }
-  r.set(t, e - 1);
+  r.set(e, t - 1);
 }
 function l() {
-  if (typeof window > "u" || typeof window.__TAURI_EVENT_PLUGIN_INTERNALS__?.unregisterListener == "function")
+  if (typeof window > "u")
     return;
-  const e = {
+  const e = window.__TAURI_EVENT_PLUGIN_INTERNALS__;
+  if (typeof (e == null ? void 0 : e.unregisterListener) == "function")
+    return;
+  const t = {
     unregisterListener(n, s) {
       w(s);
     }
   };
-  window.__TAURI_EVENT_PLUGIN_INTERNALS__ = e;
+  window.__TAURI_EVENT_PLUGIN_INTERNALS__ = t;
 }
-function T(t, e = !1) {
+function T(e, t = !1) {
   l();
-  const n = ++b;
-  return c.set(n, { callback: t, once: e }), n;
+  const n = ++d;
+  return c.set(n, { callback: e, once: t }), n;
 }
-async function k(t, e) {
+async function L(e, t) {
   l();
-  const n = ++f, s = o.get(t) ?? /* @__PURE__ */ new Map();
+  const n = ++f, s = o.get(e) ?? /* @__PURE__ */ new Map();
   return s.set(n, (y) => {
-    const u = c.get(e);
-    u && (u.callback({ payload: y }), u.once && (c.delete(e), r.delete(e)));
-  }), o.set(t, s), a.set(n, { topic: t, handlerId: e }), N(e), await p(), n;
+    const u = c.get(t);
+    u && (u.callback({ payload: y }), u.once && (c.delete(t), r.delete(t)));
+  }), o.set(e, s), a.set(n, { topic: e, handlerId: t }), v(t), await p(), n;
 }
-async function w(t) {
-  const e = a.get(t);
-  if (!e)
+async function w(e) {
+  const t = a.get(e);
+  if (!t)
     return;
-  a.delete(t);
-  const n = o.get(e.topic);
-  n?.delete(t), n && n.size === 0 && o.delete(e.topic), typeof e.handlerId == "number" && v(e.handlerId), await m();
+  a.delete(e);
+  const n = o.get(t.topic);
+  n == null || n.delete(e), n && n.size === 0 && o.delete(t.topic), typeof t.handlerId == "number" && g(t.handlerId), await N();
 }
-async function L(t, e) {
+async function k(e, t) {
   l();
-  const n = ++f, s = o.get(t) ?? /* @__PURE__ */ new Map();
-  return s.set(n, e), o.set(t, s), a.set(n, { topic: t }), await p(), async () => {
+  const n = ++f, s = o.get(e) ?? /* @__PURE__ */ new Map();
+  return s.set(n, t), o.set(e, s), a.set(n, { topic: e }), await p(), async () => {
     await w(n);
   };
 }
 export {
-  k as attachTransformListener,
+  L as attachTransformListener,
   w as detachTransformListener,
-  L as listenNativeTopic,
+  k as listenNativeTopic,
   T as registerTransformCallback
 };
 //# sourceMappingURL=native-event-bridge.js.map

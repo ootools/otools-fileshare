@@ -1,122 +1,124 @@
-import { invoke as i } from "./runtime.js";
-const l = (t) => {
-  if (typeof t == "string") {
-    const n = t.trim();
-    return n || null;
+import { invoke as a } from "./runtime.js";
+const u = (e) => {
+  if (typeof e == "string") {
+    const r = e.trim();
+    return r || null;
   }
-  if (t && typeof t == "object" && "path" in t) {
-    const n = t.path;
-    if (typeof n == "string") {
-      const r = n.trim();
-      return r || null;
+  if (e && typeof e == "object" && "path" in e) {
+    const r = e.path;
+    if (typeof r == "string") {
+      const n = r.trim();
+      return n || null;
     }
   }
   return null;
-}, u = (t) => {
-  if (Array.isArray(t))
-    return t.map((r) => l(r)).filter((r) => !!r);
-  const n = l(t);
-  return n ? [n] : [];
-}, o = (t, n) => {
-  const r = u(t);
-  return n.multiple ? r.length ? r : null : r[0] ?? null;
+}, f = (e) => {
+  if (Array.isArray(e))
+    return e.map((n) => u(n)).filter((n) => !!n);
+  const r = u(e);
+  return r ? [r] : [];
+}, c = (e, r) => {
+  const n = f(e);
+  return r.multiple ? n.length ? n : null : n[0] ?? null;
 };
-function e() {
+function l() {
+  var r;
   if (typeof window > "u")
     return;
-  const t = window.otools ?? window.utools;
-  return t?.dialog ?? t?.runtime?.dialog ?? void 0;
+  const e = window.otools ?? window.utools;
+  return (e == null ? void 0 : e.dialog) ?? ((r = e == null ? void 0 : e.runtime) == null ? void 0 : r.dialog) ?? void 0;
 }
-async function c(t) {
+async function i(e) {
   try {
-    const n = await i("plugin:dialog|open", {
-      options: t
+    const r = await a("plugin:dialog|open", {
+      options: e
     });
-    return o(n, t);
+    return c(r, e);
   } catch {
     return null;
   }
 }
-async function f(t) {
+async function d(e) {
   try {
-    const n = await i("plugin:dialog|save", { options: t });
-    return l(n);
+    const r = await a("plugin:dialog|save", { options: e });
+    return u(r);
   } catch {
     return null;
   }
 }
-async function s(t = {}) {
-  const n = t ?? {}, r = e();
-  if (r?.open)
-    return o(
-      await r.open(n),
-      n
+async function g(e = {}) {
+  const r = e ?? {}, n = l();
+  if (n != null && n.open)
+    return c(
+      await n.open(r),
+      r
     );
-  const a = await c(n);
-  return a !== null ? a : null;
+  const t = await i(r);
+  return t !== null ? t : null;
 }
-async function g(t = {}) {
-  const n = e();
-  if (n?.save)
-    return l(await n.save(t));
-  const r = await f(t);
-  return r !== null ? r : null;
+async function w(e = {}) {
+  const r = l();
+  if (r != null && r.save)
+    return u(await r.save(e));
+  const n = await d(e);
+  return n !== null ? n : null;
 }
-async function y(t, n) {
-  const r = e();
-  if (r?.message) {
-    await r.message(t, n);
+async function k(e, r) {
+  var t;
+  const n = l();
+  if (n != null && n.message) {
+    await n.message(e, r);
     return;
   }
   try {
-    await i("plugin:dialog|message", {
-      message: String(t),
-      title: typeof n == "string" ? n : n?.title,
-      kind: typeof n == "string" ? void 0 : n?.kind,
-      okButtonLabel: typeof n == "string" ? void 0 : n?.okLabel ?? n?.buttons?.ok
+    await a("plugin:dialog|message", {
+      message: String(e),
+      title: typeof r == "string" ? r : r == null ? void 0 : r.title,
+      kind: typeof r == "string" || r == null ? void 0 : r.kind,
+      okButtonLabel: typeof r == "string" ? void 0 : (r == null ? void 0 : r.okLabel) ?? ((t = r == null ? void 0 : r.buttons) == null ? void 0 : t.ok)
     });
     return;
   } catch {
   }
-  typeof window < "u" && window.alert(t);
+  typeof window < "u" && window.alert(e);
 }
-async function w(t, n) {
-  const r = e();
-  if (r?.confirm)
-    return r.confirm(t, n);
+async function m(e, r) {
+  const n = l();
+  if (n != null && n.confirm)
+    return n.confirm(e, r);
   try {
-    return !!await i("plugin:dialog|confirm", {
-      message: String(t),
-      title: typeof n == "string" ? n : n?.title,
-      kind: typeof n == "string" ? void 0 : n?.kind,
-      okButtonLabel: typeof n == "string" ? void 0 : n?.okLabel,
-      cancelButtonLabel: typeof n == "string" ? void 0 : n?.cancelLabel
+    return !!await a("plugin:dialog|confirm", {
+      message: String(e),
+      title: typeof r == "string" ? r : r == null ? void 0 : r.title,
+      kind: typeof r == "string" || r == null ? void 0 : r.kind,
+      okButtonLabel: typeof r == "string" || r == null ? void 0 : r.okLabel,
+      cancelButtonLabel: typeof r == "string" || r == null ? void 0 : r.cancelLabel
     });
   } catch {
   }
-  return typeof window > "u" ? !1 : window.confirm(t);
+  return typeof window > "u" ? !1 : window.confirm(e);
 }
-async function k(t, n) {
-  const r = e();
-  if (r?.ask)
-    return r.ask(t, n);
+async function v(e, r) {
+  const n = l();
+  if (n != null && n.ask)
+    return n.ask(e, r);
   try {
-    return !!await i("plugin:dialog|ask", {
-      message: String(t),
-      title: typeof n == "string" ? n : n?.title,
-      kind: typeof n == "string" ? void 0 : n?.kind,
-      yesButtonLabel: typeof n == "string" ? void 0 : n?.okLabel,
-      noButtonLabel: typeof n == "string" ? void 0 : n?.cancelLabel
+    return !!await a("plugin:dialog|ask", {
+      message: String(e),
+      title: typeof r == "string" ? r : r == null ? void 0 : r.title,
+      kind: typeof r == "string" || r == null ? void 0 : r.kind,
+      yesButtonLabel: typeof r == "string" || r == null ? void 0 : r.okLabel,
+      noButtonLabel: typeof r == "string" || r == null ? void 0 : r.cancelLabel
     });
   } catch {
   }
-  return typeof window > "u" ? !1 : window.confirm(t);
+  return typeof window > "u" ? !1 : window.confirm(e);
 }
 export {
-  k as ask,
-  w as confirm,
-  y as message,
-  s as open,
-  g as save
+  v as ask,
+  m as confirm,
+  k as message,
+  g as open,
+  w as save
 };
 //# sourceMappingURL=tauri-plugin-dialog-shim.js.map

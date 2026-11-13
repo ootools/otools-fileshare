@@ -55,4 +55,26 @@
 
 独立只读代码审查已完成；所列 P1/P2 问题已通过一次回归修复处理：匿名 token 升权、暂存文件泄露、共享根符号链接替换、tus no-follow 与崩溃恢复、停服并发/迟到写入、错误字符串契约、宿主 listenTauri 事件、SDK 快照跟踪、ZIP64 与危险归档路径、移动端特殊字符路径、后台 opener 等待线程。新增 8 个 Rust 回归和 2 个前端回归，均先失败再通过；修复后全套 54 Rust / 11 JS、lint、构建、包校验与真实 ABI E2E 通过。未再次派审查者复审，不把测试回归称为二次独立审查。
 
-默认 `panel` 打开已在源码及生产清单验证。源码在 main 工作区，当前新增实现未提交，不覆盖其他仓库已有改动。
+## 文件选择器修复回归（2026-11-13）
+
+- 已复现并修复：SDK 浏览 IPC 指向 `tools_webview_browse_dialog` 且参数为 `{request:{path}}`；宿主 panel 注入脚本和主 API 同步该请求形状，旧宿主注入的错误包装在 Tauri IPC 可用时被 SDK 绕开。
+- 宿主列表与读取返回原始元数据，不再误转换为编辑器树节点/纯文本。
+- 自绘弹层保持在 webview 内：多文件选择、导航清除旧选项、加载失败禁用确认并允许重试、取消重开、Escape 不向页面的面板关闭处理器转发。
+- 文件选中反馈：蓝色背景、左侧选中条、✓ 勾选及已选数量；目录模式突出当前待确认路径，保留单击进入目录的导航规则。新增高亮、勾选取消与目录提示回归测试均先失败再通过。
+- SDK 完整测试：221 passed；SDK typecheck 与 build 通过。宿主注入脚本/主 API：6 passed；`vue-tsc --noEmit --pretty false` 通过。
+- 插件实际内嵌 SDK 的 `tests/file-chooser.test.mjs` 已先失败、同步快照后通过，验证选择文件以及重开导航选择目录。插件全部测试：13 passed；面板构建通过。
+- 浏览器使用实际插件 SDK 的固定目录夹具验证：自绘弹层显示、读取请求嵌套参数、同目录两文件多选返回及弹层关闭。浏览器定位点击工具多次超时，最终使用页面事件调用验证状态；不将此结果称为真实 OTools panel 实机验收。
+- 独立只读审查：本次文件树、宿主接口及回归测试未发现新增可操作问题；未修改 native、市场分包或权限配置。
+- 本轮提交 SDK `d8f4537` 与宿主 `8f59c100`，插件 v0.1.5 快照从已提交 SDK 源码独立构建，来源见 `vendor/sdk-source.json`。没有夹带另一会话未完成的事件订阅变更。市场发布与六架构 CI 在本轮发版继续验收。
+
+## 磁盘快捷入口增强（2026-11-13）
+
+- 宿主 `webview_fs::dialog_roots` 在原有 `roots` 列表中增加已挂载卷/磁盘入口，不改变插件协议。
+- Windows：继续枚举可访问的 A–Z 盘符；macOS：根目录及 `/Volumes` 下的卷；Linux：读取 `/proc/self/mountinfo`，回退 `/proc/mounts`，过滤 proc/sysfs/tmpfs/cgroup 等虚拟文件系统。
+- 自动跳过消失的目录，按真实路径去重；支持中文、空格及 Linux 挂载路径八进制转义。没有执行挂载、卸载、格式化或提权操作。
+- 新模块独立编译/单测：`rustc --edition 2021 --test crates/ot-platform-core/src/webview_fs/dialog_roots.rs`，10 passed。只对修改的 Rust 文件运行 rustfmt 检查；未运行整套宿主 Cargo 构建。独立审查指出 Unicode 空白及非 UTF-8 挂载记录边界；已补回归并修复，按 ASCII 分隔、逐行处理，单条无法表示的记录不会丢掉其他磁盘。
+- SDK 回归：224 passed，包含 Windows/macOS/Linux 磁盘快捷入口点击、当前目录提示与确认；插件前端 13 passed。
+- 本机直接运行实际枚举得到 `/` 与 `/Volumes/Recovery`；只读 `mount`/`stat` 核对 Recovery 为已挂载卷，`Macintosh HD -> /` 不重复列出。未连接外置盘做实机热拔插测试；Windows/Linux 的系统挂载枚举用确定性 fixtures 验证，不冒充各平台物理设备测试。
+- 新磁盘入口属于宿主原生代码：需要重建/更新 OTools 宿主才能显示，仅更新插件 SDK 不会让旧宿主自动具备枚举能力。
+
+默认 `panel` 打开已在源码及生产清单验证。

@@ -1,0 +1,9 @@
+{
+  "upstream": "https://github.com/ootools/otools-plugin-sdk",
+  "commit": "d8f4537d022495671bdde411b7eac2bfcbd64a65",
+  "version": "0.1.0",
+  "modified": false,
+  "builtFrom": "git archive d8f4537",
+  "hostFeedbackCommit": "8f59c100dd626af0a24bf8fab3d784b183970fa8",
+  "note": "Built from committed SDK source, including host browse request nesting, panel-safe selection, highlights and disk shortcut tests. No uncommitted host-event-status changes are included. Disk enumeration itself requires an OTools host build containing hostFeedbackCommit."
+}

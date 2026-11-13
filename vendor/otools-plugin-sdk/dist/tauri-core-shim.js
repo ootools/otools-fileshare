@@ -3,7 +3,10 @@ import { registerTransformCallback as p } from "./native-event-bridge.js";
 const i = () => {
   if (!(typeof window > "u"))
     return window.__TAURI_INTERNALS__;
-}, s = () => typeof i()?.invoke == "function", a = "/__tauri_remote_service_file__", c = (n) => n.replace(/\/+$/, ""), l = (n) => String(n || "").startsWith("/") || /^[A-Za-z]:[\\/]/.test(String(n || "")), o = (n) => {
+}, s = () => {
+  var n;
+  return typeof ((n = i()) == null ? void 0 : n.invoke) == "function";
+}, a = "/__tauri_remote_service_file__", c = (n) => n.replace(/\/+$/, ""), l = (n) => String(n || "").startsWith("/") || /^[A-Za-z]:[\\/]/.test(String(n || "")), o = (n) => {
   const t = String(n || "").trim();
   if (!t)
     return t;

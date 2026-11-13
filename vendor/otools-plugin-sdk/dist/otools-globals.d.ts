@@ -88,7 +88,15 @@ export interface OToolsEnv {
     paths?: Record<string, string>;
 }
 export interface OToolsAPI {
+    shortcuts?: {
+        register(shortcut: string, handler: () => void): Promise<() => Promise<void>>;
+    };
     capture?: import('./capture-factory').CaptureApi;
+    ai?: import('./ai-types').AiApi;
+    agent?: import('./agent-types').AgentApi;
+    data?: ReturnType<typeof import('./plugin-data-factory').createPluginDataApi>;
+    observation?: import('./observation-factory').ObservationApi;
+    reminders?: ReturnType<typeof import('./reminder-factory').createReminderApi>;
     isDev(): boolean;
     isMacOS(): boolean;
     isWindows(): boolean;

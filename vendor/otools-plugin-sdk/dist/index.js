@@ -1,163 +1,172 @@
-import { capture as Q } from "./capture.js";
-import { createOtoolsAliasMap as tt } from "./aliases.js";
-import { otoolsTauriShimPlugin as ot } from "./vite.js";
-import { listen as S, invoke as x, listenTauri as L, invokeTauri as N } from "./runtime.js";
-import { emit as rt, getOtoolsApi as st, isOtoolsPluginRuntime as it, openExternal as at, openPath as lt } from "./runtime.js";
-import { pickDirectory as dt, pickFile as pt, pickFiles as ut, pickZipFile as ft, saveFile as ht } from "./dialog.js";
-import { CaptureError as wt, createCaptureApi as gt } from "./capture-factory.js";
-function E() {
+import { capture as de } from "./capture.js";
+import { AgentError as ue, createAgentApi as fe } from "./agent-factory.js";
+import { createAiApi as me } from "./ai-factory.js";
+import { createPluginDataApi as we } from "./plugin-data-factory.js";
+import { ObservationError as be, createObservationApi as xe } from "./observation-factory.js";
+import { createReminderApi as ke } from "./reminder-factory.js";
+import { createOtoolsAliasMap as ve } from "./aliases.js";
+import { otoolsTauriShimPlugin as Oe } from "./vite.js";
+import { listen as q, invoke as L, listenTauri as $, invokeTauri as M } from "./runtime.js";
+import { emit as Se, getOtoolsApi as Pe, isOtoolsPluginRuntime as Ne, openExternal as Le, openPath as Te } from "./runtime.js";
+import { pickDirectory as Ue, pickFile as ze, pickFiles as De, pickZipFile as Ie, saveFile as He } from "./dialog.js";
+import { CaptureError as Be, createCaptureApi as qe } from "./capture-factory.js";
+function U() {
   if (!(typeof window > "u"))
     return window.otools ?? window.utools;
 }
-async function j(e, t) {
-  const o = String(e ?? "").trim();
+async function te(t, e) {
+  const o = String(t ?? "").trim();
   if (!o)
     return;
-  const r = E();
-  if (r?.shellOpen) {
-    await r.shellOpen(o, t);
+  const n = U();
+  if (n != null && n.shellOpen) {
+    await n.shellOpen(o, e);
     return;
   }
-  if (r?.shellOpenExternal && /^https?:\/\//i.test(o)) {
-    r.shellOpenExternal(o);
+  if (n != null && n.shellOpenExternal && /^https?:\/\//i.test(o)) {
+    n.shellOpenExternal(o);
     return;
   }
-  if (r?.shellOpenPath) {
-    r.shellOpenPath(o);
+  if (n != null && n.shellOpenPath) {
+    n.shellOpenPath(o);
     return;
   }
   typeof window < "u" && window.open(o, "_blank", "noopener,noreferrer");
 }
-async function q(e) {
-  const t = String(e ?? "").trim();
-  if (!t)
-    return;
-  const o = E();
-  if (o?.shellOpenPath) {
-    o.shellOpenPath(t);
-    return;
-  }
-}
-async function W(e) {
-  const t = String(e ?? "").trim();
-  if (!t)
-    return;
-  const o = E();
-  if (o?.shellOpenExternal) {
-    o.shellOpenExternal(t);
-    return;
-  }
-  typeof window < "u" && window.open(t, "_blank", "noopener,noreferrer");
-}
-const T = "otools-open-file", O = 3e3;
-function F(e) {
+async function oe(t) {
+  const e = String(t ?? "").trim();
   if (!e)
+    return;
+  const o = U();
+  if (o != null && o.shellOpenPath) {
+    o.shellOpenPath(e);
+    return;
+  }
+}
+async function ne(t) {
+  const e = String(t ?? "").trim();
+  if (!e)
+    return;
+  const o = U();
+  if (o != null && o.shellOpenExternal) {
+    o.shellOpenExternal(e);
+    return;
+  }
+  typeof window < "u" && window.open(e, "_blank", "noopener,noreferrer");
+}
+const j = "otools-open-file", I = 3e3;
+function W(t) {
+  if (!t)
     return [];
   try {
-    const o = new URLSearchParams(e).get("otoolsOpenFile");
+    const o = new URLSearchParams(t).get("otoolsOpenFile");
     if (!o)
       return [];
-    const r = JSON.parse(o);
-    return Array.isArray(r) ? r.map((s) => String(s || "").trim()).filter(Boolean) : [];
+    const n = JSON.parse(o);
+    return Array.isArray(n) ? n.map((s) => String(s || "").trim()).filter(Boolean) : [];
   } catch {
     return [];
   }
 }
-function U(e) {
-  return e.map((t) => {
-    const o = String(t || "").trim(), r = o.split(/[\\/]/), s = r[r.length - 1] || o, p = s.lastIndexOf("."), i = p > 0 ? s.slice(p + 1).toLowerCase() : "";
-    return { path: o, name: s, ext: i };
+function K(t) {
+  return t.map((e) => {
+    const o = String(e || "").trim(), n = o.split(/[\\/]/), s = n[n.length - 1] || o, m = s.lastIndexOf("."), g = m > 0 ? s.slice(m + 1).toLowerCase() : "";
+    return { path: o, name: s, ext: g };
   });
 }
-function D() {
+function V() {
+  var t;
   if (typeof window < "u")
     try {
-      const e = window.__OToolsEnv, t = typeof e?.pluginUuid == "string" ? e.pluginUuid.trim() : "";
-      if (t)
-        return t;
-      const o = new URLSearchParams(window.location?.search || ""), r = (o.get("plugin") || o.get("pluginUuid") || o.get("plugin_uuid") || "").trim();
-      if (r)
-        return r;
+      const e = window.__OToolsEnv, o = typeof (e == null ? void 0 : e.pluginUuid) == "string" ? e.pluginUuid.trim() : "";
+      if (o)
+        return o;
+      const n = new URLSearchParams(((t = window.location) == null ? void 0 : t.search) || ""), s = (n.get("plugin") || n.get("pluginUuid") || n.get("plugin_uuid") || "").trim();
+      if (s)
+        return s;
     } catch {
     }
   return "";
 }
-async function K(e) {
-  const t = /* @__PURE__ */ new Map(), o = (i) => {
-    const l = Date.now(), u = [];
-    for (const m of i) {
-      const w = String(m || "").trim();
-      if (!w)
+async function re(t) {
+  var g;
+  const e = /* @__PURE__ */ new Map(), o = (c) => {
+    const u = Date.now(), f = [];
+    for (const h of c) {
+      const d = String(h || "").trim();
+      if (!d)
         continue;
-      const f = t.get(w);
-      typeof f == "number" && l - f < O || (t.set(w, l), u.push(w));
+      const w = e.get(d);
+      typeof w == "number" && u - w < I || (e.set(d, u), f.push(d));
     }
-    if (t.size > 256)
-      for (const [m, w] of t)
-        l - w >= O && t.delete(m);
-    u.length && e(U(u));
-  }, r = async () => {
-    const i = D();
-    if (!i)
+    if (e.size > 256)
+      for (const [h, d] of e)
+        u - d >= I && e.delete(h);
+    f.length && t(K(f));
+  }, n = async () => {
+    const c = V();
+    if (!c)
       return;
-    let l = [];
+    let u = [];
     try {
-      const u = await x("otools_consume_open_files", { pluginUuid: i });
-      l = Array.isArray(u) ? u.map(String) : [];
+      const f = await L("otools_consume_open_files", { pluginUuid: c });
+      u = Array.isArray(f) ? f.map(String) : [];
     } catch {
       return;
     }
-    o(l);
-  }, s = await S(T, () => {
-    r();
-  }), p = F(
-    typeof window < "u" && window.location?.search || ""
+    o(u);
+  }, s = await q(j, () => {
+    n();
+  }), m = W(
+    typeof window < "u" && ((g = window.location) == null ? void 0 : g.search) || ""
   );
-  return p.length && o(p), r(), s;
+  return m.length && o(m), n(), s;
 }
-const H = "otools-keyword-dispatch";
-function C() {
+const J = "otools-keyword-dispatch";
+function H() {
+  var t;
   if (typeof window < "u")
     try {
-      const e = window.__OToolsEnv, t = typeof e?.pluginUuid == "string" ? e.pluginUuid.trim() : "";
-      if (t)
-        return t;
-      const o = new URLSearchParams(window.location?.search || ""), r = (o.get("plugin") || o.get("pluginUuid") || o.get("plugin_uuid") || "").trim();
-      if (r)
-        return r;
+      const e = window.__OToolsEnv, o = typeof (e == null ? void 0 : e.pluginUuid) == "string" ? e.pluginUuid.trim() : "";
+      if (o)
+        return o;
+      const n = new URLSearchParams(((t = window.location) == null ? void 0 : t.search) || ""), s = (n.get("plugin") || n.get("pluginUuid") || n.get("plugin_uuid") || "").trim();
+      if (s)
+        return s;
     } catch {
     }
   return "";
 }
-const _ = /* @__PURE__ */ new Map();
-async function V(e) {
-  const t = C(), o = typeof window > "u" ? void 0 : window.__TAURI_INTERNALS__?.metadata?.currentWebview?.label, r = JSON.stringify([t.toLowerCase(), o || ""]), s = _.get(r) || { entries: [], consuming: null };
-  _.set(r, s);
-  const p = s.consuming, i = /* @__PURE__ */ new Set();
-  let l = !1, u = !1, m = null;
-  const w = (h) => {
-    const c = [];
-    for (const y of h) {
-      if (!y || typeof y != "object")
+const R = /* @__PURE__ */ new Map();
+async function se(t) {
+  var v, _, C;
+  const e = H(), o = typeof window > "u" || (C = (_ = (v = window.__TAURI_INTERNALS__) == null ? void 0 : v.metadata) == null ? void 0 : _.currentWebview) == null ? void 0 : C.label, n = JSON.stringify([e.toLowerCase(), o || ""]), s = R.get(n) || { entries: [], consuming: null };
+  R.set(n, s);
+  const m = s.consuming, g = /* @__PURE__ */ new Set();
+  let c = !1, u = !1, f = null;
+  const h = (p) => {
+    const y = [];
+    for (const x of p) {
+      if (!x || typeof x != "object")
         continue;
-      const g = y;
-      typeof g.id != "string" || !g.id.trim() || typeof g.keyword != "string" || !g.keyword.trim() || i.has(g.id) || (i.add(g.id), c.push(g));
+      const l = x;
+      typeof l.id != "string" || !l.id.trim() || typeof l.keyword != "string" || !l.keyword.trim() || g.has(l.id) || (g.add(l.id), y.push(l));
     }
-    if (i.size > 512) {
-      const y = Array.from(i).slice(-256);
-      i.clear();
-      for (const g of y)
-        i.add(g);
+    if (g.size > 512) {
+      const x = Array.from(g).slice(-256);
+      g.clear();
+      for (const l of x)
+        g.add(l);
     }
-    c.length && !l && e(c);
-  }, f = () => (u = !0, m || (m = (async () => {
-    for (; u && !l; ) {
-      if (u = !1, !t)
+    y.length && !c && t(y);
+  }, d = () => (u = !0, f || (f = (async () => {
+    for (; u && !c; ) {
+      if (u = !1, !e)
         return;
       if (!s.consuming) {
-        const h = o ? { pluginUuid: t, targetLabel: o } : { pluginUuid: t };
-        s.consuming = N("otools_consume_keyword_dispatch", h).then((c) => {
-          Array.isArray(c) && s.entries.push(...c);
+        const p = o ? { pluginUuid: e, targetLabel: o } : { pluginUuid: e };
+        s.consuming = M("otools_consume_keyword_dispatch", p).then((y) => {
+          Array.isArray(y) && s.entries.push(...y);
         }).finally(() => {
           s.consuming = null;
         });
@@ -167,144 +176,171 @@ async function V(e) {
       } catch {
         continue;
       }
-      if (!l) {
-        const h = s.entries;
-        s.entries = [], w(h);
+      if (!c) {
+        const p = s.entries;
+        s.entries = [], h(p);
       }
     }
   })().finally(() => {
-    m = null;
-  }), m)), b = await L(H, (h) => {
-    const c = h?.payload;
-    !l && (typeof c != "string" || c.toLowerCase() === C().toLowerCase()) && f();
+    f = null;
+  }), f)), w = await $(J, (p) => {
+    const y = p == null ? void 0 : p.payload;
+    !c && (typeof y != "string" || y.toLowerCase() === H().toLowerCase()) && d();
   });
-  return p ? p.catch(() => {
+  return m ? m.catch(() => {
   }).then(() => {
-    l || f();
-  }) : f(), async () => {
-    l = !0, u = !1, await b();
+    c || d();
+  }) : d(), async () => {
+    c = !0, u = !1, await w();
   };
 }
-async function A(e) {
-  return x("browse_dialog", { path: e ?? "" });
+async function Y(t) {
+  return L("tools_webview_browse_dialog", { request: { path: t ?? "" } });
 }
-async function J(e) {
-  const t = String(e ?? "").trim();
-  if (!t)
+async function ie(t) {
+  const e = String(t ?? "").trim();
+  if (!e)
     throw new Error("listHostDir requires path");
-  return x("read_directory_recursive", { path: t });
+  return L("tools_webview_list_dir", { path: e });
 }
-async function Y(e) {
-  const t = String(e ?? "").trim();
-  if (!t)
+async function ae(t) {
+  const e = String(t ?? "").trim();
+  if (!e)
     throw new Error("readHostFile requires path");
-  return x("read_file_content", { filePath: t });
+  return L("tools_webview_read_file", { path: e });
 }
-const I = (e, t) => {
-  if (!t?.length || e.kind === "directory")
+const Z = (t, e) => {
+  if (!(e != null && e.length) || t.kind === "directory")
     return !0;
-  const o = e.name.includes(".") ? e.name.split(".").pop().toLowerCase() : "";
-  return t.some(
-    (r) => r.extensions.some((s) => s.trim().toLowerCase().replace(/^\./, "") === o)
+  const o = t.name.includes(".") ? t.name.split(".").pop().toLowerCase() : "";
+  return e.some(
+    (n) => n.extensions.some((s) => s.trim().toLowerCase().replace(/^\./, "") === o)
   );
 };
-function z() {
+function G() {
   if (document.getElementById("otools-host-tree-style"))
     return;
-  const e = document.createElement("style");
-  e.id = "otools-host-tree-style", e.textContent = M, document.head.appendChild(e);
+  const t = document.createElement("style");
+  t.id = "otools-host-tree-style", t.textContent = X, document.head.appendChild(t);
 }
-async function R(e) {
+async function Q(t) {
   if (typeof document > "u" || !document.body)
     throw new Error("pickFromHostTree requires a DOM document");
-  const t = !!e.directory, o = e.title ?? (t ? "选择目录" : "选择文件");
-  return new Promise((r) => {
-    let s = e.startPath ?? "", p = null;
-    z();
-    const i = document.createElement("div");
-    i.setAttribute("data-host-tree", ""), i.className = "otools-host-tree-overlay";
-    const l = document.createElement("div");
-    l.className = "otools-host-tree-panel", i.appendChild(l);
-    const u = document.createElement("div");
-    u.className = "otools-host-tree-header";
-    const m = document.createElement("div");
-    m.className = "otools-host-tree-title", m.textContent = o, u.appendChild(m);
+  const e = !!t.directory, o = !!t.multiple && !e, n = t.title ?? (e ? "选择目录" : "选择文件");
+  return new Promise((s) => {
+    let m = "", g = t.startPath ?? "", c = !1, u = !1, f = 0;
+    const h = /* @__PURE__ */ new Set();
+    G();
+    const d = document.createElement("div");
+    d.setAttribute("data-host-tree", ""), d.className = "otools-host-tree-overlay";
     const w = document.createElement("div");
-    w.className = "otools-host-tree-path", u.appendChild(w), l.appendChild(u);
-    const f = document.createElement("div");
-    f.className = "otools-host-tree-body", l.appendChild(f);
-    const b = document.createElement("div");
-    b.className = "otools-host-tree-footer";
-    const h = document.createElement("button");
-    h.type = "button", h.textContent = "取消", h.className = "otools-host-tree-btn", h.setAttribute("data-host-tree-cancel", "");
-    const c = document.createElement("button");
-    c.type = "button", c.textContent = t ? "选择此目录" : "选择", c.className = "otools-host-tree-btn otools-host-tree-btn-primary", c.setAttribute("data-host-tree-confirm", ""), c.disabled = !t && !p, b.appendChild(h), b.appendChild(c), l.appendChild(b);
-    const y = (a) => {
-      window.removeEventListener("keydown", g, !0), i.remove(), r(a);
-    }, g = (a) => {
-      a.key === "Escape" && (a.preventDefault(), y({ kind: "cancelled", source: "host-tree", paths: [], names: [] }));
+    w.className = "otools-host-tree-panel", w.setAttribute("role", "dialog"), w.setAttribute("aria-modal", "true"), w.setAttribute("aria-label", n), d.appendChild(w);
+    const v = document.createElement("div");
+    v.className = "otools-host-tree-header";
+    const _ = document.createElement("div");
+    _.className = "otools-host-tree-title", _.textContent = n, v.appendChild(_);
+    const C = document.createElement("div");
+    C.className = "otools-host-tree-path", v.appendChild(C), w.appendChild(v);
+    const p = document.createElement("div");
+    p.className = "otools-host-tree-status", p.setAttribute("role", "status"), p.hidden = !0;
+    const y = document.createElement("span");
+    y.setAttribute("data-host-tree-error", "");
+    const x = document.createElement("button");
+    x.type = "button", x.className = "otools-host-tree-btn", x.textContent = "重试", x.setAttribute("data-host-tree-retry", ""), p.appendChild(y), p.appendChild(x), w.appendChild(p);
+    const l = document.createElement("div");
+    l.className = "otools-host-tree-body", w.appendChild(l);
+    const P = document.createElement("div");
+    P.className = "otools-host-tree-footer";
+    const O = document.createElement("div");
+    O.className = "otools-host-tree-selection", O.setAttribute("data-host-tree-selection", ""), O.setAttribute("role", "status"), O.textContent = e ? "请选择目录" : "请选择文件", P.appendChild(O);
+    const S = document.createElement("button");
+    S.type = "button", S.textContent = "取消", S.className = "otools-host-tree-btn", S.setAttribute("data-host-tree-cancel", "");
+    const k = document.createElement("button");
+    k.type = "button", k.textContent = e ? "选择此目录" : "选择", k.className = "otools-host-tree-btn otools-host-tree-btn-primary", k.setAttribute("data-host-tree-confirm", ""), k.disabled = !0, P.appendChild(S), P.appendChild(k), w.appendChild(P);
+    const T = () => {
+      k.disabled = !c || (e ? !m : !h.size), C.classList.toggle("otools-host-tree-current", e && c && !!m), O.textContent = e && c ? `已选目录：${m}` : h.size ? `已选 ${h.size} 个文件` : e ? "请选择目录" : "请选择文件", O.title = e && c ? m : "";
+    }, N = (i) => {
+      u || (u = !0, f += 1, window.removeEventListener("keydown", z, !0), d.remove(), s(i));
+    }, z = (i) => {
+      i.key === "Escape" && (i.preventDefault(), i.stopImmediatePropagation(), N({ kind: "cancelled", source: "host-tree", paths: [], names: [] }));
     };
-    window.addEventListener("keydown", g, !0), i.addEventListener("mousedown", (a) => {
-      a.target === i && y({ kind: "cancelled", source: "host-tree", paths: [], names: [] });
-    }), h.addEventListener(
+    window.addEventListener("keydown", z, !0), d.addEventListener("mousedown", (i) => {
+      i.target === d && N({ kind: "cancelled", source: "host-tree", paths: [], names: [] });
+    }), S.addEventListener(
       "click",
-      () => y({ kind: "cancelled", source: "host-tree", paths: [], names: [] })
-    ), c.addEventListener("click", () => {
-      if (t) {
-        const a = s.split(/[\\/]/).pop() || s;
-        y({
-          kind: "picked",
-          source: "host-tree",
-          paths: [s],
-          names: [a]
-        });
-      } else if (p) {
-        const a = p.split(/[\\/]/).pop() || p;
-        y({
-          kind: "picked",
-          source: "host-tree",
-          paths: [p],
-          names: [a]
-        });
-      }
+      () => N({ kind: "cancelled", source: "host-tree", paths: [], names: [] })
+    ), k.addEventListener("click", () => {
+      if (k.disabled) return;
+      const i = e ? [m] : Array.from(h);
+      N({
+        kind: "picked",
+        source: "host-tree",
+        paths: i,
+        names: i.map((b) => b.split(/[\\/]/).filter(Boolean).pop() || b)
+      });
     });
-    const k = (a) => {
-      if (a.currentPath && (s = a.currentPath), w.textContent = s || "（根）", f.innerHTML = "", a.parentPath) {
-        const n = document.createElement("div");
-        n.className = "otools-host-tree-entry otools-host-tree-up", n.setAttribute("data-host-tree-up", ""), n.setAttribute("data-path", a.parentPath), n.setAttribute("data-kind", "directory"), n.textContent = "↑ 上一级", f.appendChild(n);
+    const B = (i) => {
+      if (!i || typeof i.currentPath != "string" || !i.currentPath || !Array.isArray(i.roots) || !Array.isArray(i.entries))
+        throw new Error("宿主返回的目录数据无效");
+      if (m = i.currentPath, C.textContent = m, l.replaceChildren(), i.parentPath) {
+        const r = document.createElement("div");
+        r.className = "otools-host-tree-entry otools-host-tree-up", r.setAttribute("data-host-tree-up", ""), r.setAttribute("data-path", i.parentPath), r.setAttribute("data-kind", "directory"), r.textContent = "↑ 上一级", l.appendChild(r);
       }
-      for (const n of a.roots) {
-        const d = document.createElement("div");
-        d.className = "otools-host-tree-entry otools-host-tree-root", d.setAttribute("data-host-tree-root", ""), d.setAttribute("data-path", n.path), d.setAttribute("data-kind", "directory"), d.textContent = `📁 ${n.name}  (${n.path})`, f.appendChild(d);
+      for (const r of i.roots) {
+        const a = document.createElement("div");
+        a.className = "otools-host-tree-entry otools-host-tree-root", a.setAttribute("data-host-tree-root", ""), a.setAttribute("data-path", r.path), a.setAttribute("data-kind", "directory"), a.textContent = `📁 ${r.name}  (${r.path})`, l.appendChild(a);
       }
-      const v = a.entries.filter(
-        (n) => I(n, e.filters)
+      const b = i.entries.filter(
+        (r) => (r.kind === "file" || r.kind === "directory") && Z(r, t.filters)
       );
-      for (const n of v) {
-        const d = document.createElement("div");
-        d.className = "otools-host-tree-entry", d.setAttribute("data-host-tree-entry", ""), d.setAttribute("data-path", n.path), d.setAttribute("data-kind", n.kind), d.textContent = n.kind === "directory" ? `📁 ${n.name}` : `📄 ${n.name}`, !t && p === n.path && d.classList.add("otools-host-tree-selected"), f.appendChild(d);
+      for (const r of b) {
+        const a = document.createElement("div");
+        a.className = "otools-host-tree-entry", a.setAttribute("data-host-tree-entry", ""), a.setAttribute("data-path", r.path), a.setAttribute("data-kind", r.kind);
+        const A = document.createElement("span");
+        if (A.className = "otools-host-tree-entry-label", A.textContent = r.kind === "directory" ? `📁 ${r.name}` : `📄 ${r.name}`, a.appendChild(A), !e && r.kind === "file") {
+          a.setAttribute("aria-selected", "false");
+          const E = document.createElement("span");
+          E.className = "otools-host-tree-check", E.setAttribute("data-host-tree-check", ""), E.setAttribute("aria-hidden", "true"), E.textContent = "✓", E.hidden = !0, a.appendChild(E);
+        }
+        l.appendChild(a);
       }
-      if (!a.parentPath && !a.roots.length && !v.length) {
-        const n = document.createElement("div");
-        n.className = "otools-host-tree-empty", n.textContent = "该目录为空", f.appendChild(n);
+      if (!b.length) {
+        const r = document.createElement("div");
+        r.className = "otools-host-tree-empty", r.textContent = "该目录为空", l.appendChild(r);
+      }
+    }, F = async (i) => {
+      if (u) return;
+      const b = ++f;
+      g = i, c = !1, h.clear(), T(), p.hidden = !0, l.replaceChildren();
+      const r = document.createElement("div");
+      r.className = "otools-host-tree-empty", r.textContent = "正在读取目录…", l.appendChild(r);
+      try {
+        const a = await Y(i);
+        if (u || b !== f) return;
+        B(a), c = !0, T();
+      } catch (a) {
+        if (u || b !== f) return;
+        l.replaceChildren(), y.textContent = `无法读取宿主目录：${a instanceof Error ? a.message : String(a)}`, p.hidden = !1;
       }
     };
-    f.addEventListener("click", (a) => {
-      const n = a.target.closest(
+    x.addEventListener("click", () => void F(g)), l.addEventListener("click", (i) => {
+      if (!c || !(i.target instanceof Element)) return;
+      const b = i.target.closest(
         "[data-host-tree-entry],[data-host-tree-root],[data-host-tree-up]"
       );
-      if (!n)
-        return;
-      const d = n.getAttribute("data-path") || "";
-      n.getAttribute("data-kind") === "directory" || n.hasAttribute("data-host-tree-root") || n.hasAttribute("data-host-tree-up") ? A(d).then(k).catch(() => {
-      }) : (p = d, c.disabled = !1, f.querySelectorAll(".otools-host-tree-selected").forEach((P) => P.classList.remove("otools-host-tree-selected")), n.classList.add("otools-host-tree-selected"));
-    }), document.body.appendChild(i), A(s || void 0).then(k).catch(() => {
-      w.textContent = "无法读取宿主目录";
-    });
+      if (!b || !l.contains(b)) return;
+      const r = b.getAttribute("data-path") || "", a = b.getAttribute("data-kind");
+      r && (a === "directory" ? F(r) : !e && a === "file" && (o ? h.has(r) ? h.delete(r) : h.add(r) : (h.clear(), h.add(r)), l.querySelectorAll("[data-host-tree-entry]").forEach((A) => {
+        const E = h.has(A.getAttribute("data-path") || "");
+        A.classList.toggle("otools-host-tree-selected", E), A.getAttribute("data-kind") === "file" && A.setAttribute("aria-selected", String(E));
+        const D = A.querySelector("[data-host-tree-check]");
+        D && (D.hidden = !E);
+      }), T()));
+    }), document.body.appendChild(d), F(g);
   });
 }
-typeof window < "u" && (window.__otoolsHostTree = R);
-const M = `
+typeof window < "u" && (window.__otoolsHostTree = Q);
+const X = `
 .otools-host-tree-overlay {
   position: fixed;
   inset: 0;
@@ -340,6 +376,16 @@ const M = `
   color: #6b6b70;
   word-break: break-all;
 }
+.otools-host-tree-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #b42318;
+}
+.otools-host-tree-status[hidden] { display: none; }
 .otools-host-tree-body {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -347,6 +393,9 @@ const M = `
   min-height: 220px;
 }
 .otools-host-tree-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 7px 10px;
   border-radius: 7px;
   font-size: 13px;
@@ -363,8 +412,33 @@ const M = `
   color: #2b6fff;
 }
 .otools-host-tree-selected {
-  background: #e3edff !important;
-  color: #1b4fd6;
+  background: #dbeafe !important;
+  color: #174ea6 !important;
+  box-shadow: inset 3px 0 #2563eb;
+  font-weight: 600;
+}
+.otools-host-tree-entry-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.otools-host-tree-check { color: #174ea6; font-weight: 700; }
+.otools-host-tree-check[hidden] { display: none; }
+.otools-host-tree-current {
+  background: #dbeafe;
+  color: #174ea6;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.otools-host-tree-selection {
+  flex: 1;
+  min-width: 0;
+  color: #174ea6;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .otools-host-tree-empty {
   padding: 18px 10px;
@@ -374,6 +448,7 @@ const M = `
 }
 .otools-host-tree-footer {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 10px;
   padding: 12px 16px;
@@ -399,35 +474,42 @@ const M = `
 }
 `;
 export {
-  wt as CaptureError,
-  T as OTOOLS_FILE_DELIVER_EVENT,
-  H as OTOOLS_KEYWORD_DISPATCH_EVENT,
-  A as browseHostDir,
-  Q as capture,
-  gt as createCaptureApi,
-  tt as createOtoolsAliasMap,
-  rt as emit,
-  st as getOtoolsApi,
-  x as invoke,
-  it as isOtoolsPluginRuntime,
-  J as listHostDir,
-  S as listen,
-  V as onOtoolsKeyword,
-  K as onOtoolsOpenFile,
-  at as openExternal,
-  lt as openPath,
-  ot as otoolsTauriShimPlugin,
-  F as parseLaunchOpenFiles,
-  dt as pickDirectory,
-  pt as pickFile,
-  ut as pickFiles,
-  R as pickFromHostTree,
-  ft as pickZipFile,
-  Y as readHostFile,
-  ht as saveFile,
-  j as shellOpen,
-  W as shellOpenExternal,
-  q as shellOpenPath,
-  U as toOpenFileEntries
+  ue as AgentError,
+  Be as CaptureError,
+  j as OTOOLS_FILE_DELIVER_EVENT,
+  J as OTOOLS_KEYWORD_DISPATCH_EVENT,
+  be as ObservationError,
+  Y as browseHostDir,
+  de as capture,
+  fe as createAgentApi,
+  me as createAiApi,
+  qe as createCaptureApi,
+  xe as createObservationApi,
+  ve as createOtoolsAliasMap,
+  we as createPluginDataApi,
+  ke as createReminderApi,
+  Se as emit,
+  Pe as getOtoolsApi,
+  L as invoke,
+  Ne as isOtoolsPluginRuntime,
+  ie as listHostDir,
+  q as listen,
+  se as onOtoolsKeyword,
+  re as onOtoolsOpenFile,
+  Le as openExternal,
+  Te as openPath,
+  Oe as otoolsTauriShimPlugin,
+  W as parseLaunchOpenFiles,
+  Ue as pickDirectory,
+  ze as pickFile,
+  De as pickFiles,
+  Q as pickFromHostTree,
+  Ie as pickZipFile,
+  ae as readHostFile,
+  He as saveFile,
+  te as shellOpen,
+  ne as shellOpenExternal,
+  oe as shellOpenPath,
+  K as toOpenFileEntries
 };
 //# sourceMappingURL=index.js.map

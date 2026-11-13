@@ -1,44 +1,45 @@
-import { Window as y, hasTauriWindowApi as s, resolveWindowLabel as h } from "./tauri-window-shim.js";
-import { invokeTauri as a } from "./runtime.js";
-import { ensurePopupManager as w, resolvePopupWindowIdentity as b } from "./popup-manager.js";
-const d = () => typeof window > "u" ? void 0 : window.__OTOOLS_CUSTOM_WINDOW__, f = /* @__PURE__ */ Symbol("existing window");
-class g extends y {
-  constructor(e, i = {}, r) {
-    super(e), this.lifecycle = /* @__PURE__ */ new Map(), this.windowId = e, r !== f && (this.ready = Promise.resolve().then(async () => {
+import { Window as b, hasTauriWindowApi as s, resolveWindowLabel as p } from "./tauri-window-shim.js";
+import { invokeTauri as w } from "./runtime.js";
+import { ensurePopupManager as d, resolvePopupWindowIdentity as g } from "./popup-manager.js";
+const c = () => typeof window > "u" ? void 0 : window.__OTOOLS_CUSTOM_WINDOW__, y = Symbol("existing window");
+class m extends b {
+  constructor(e, i = {}, n) {
+    super(e), this.lifecycle = /* @__PURE__ */ new Map(), this.windowId = e, n !== y && (this.ready = Promise.resolve().then(async () => {
+      var r;
       if (s())
-        if (d()) {
-          const { title: t, url: o, ...p } = i, c = await a("open_custom_plugin_window", {
+        if (c()) {
+          const { title: l, url: o, ...h } = i, u = await w("open_custom_plugin_window", {
             windowId: e,
-            ...t === void 0 ? {} : { title: t },
+            ...l === void 0 ? {} : { title: l },
             ...o === void 0 ? {} : { url: o },
-            options: p
+            options: h
           });
-          this.label = c.label, this.windowId = c.windowId;
+          this.label = u.label, this.windowId = u.windowId;
         } else
-          await a("plugin:webview|create_webview_window", {
-            options: { ...i, parent: typeof i.parent == "string" ? i.parent : i.parent?.label, label: e }
+          await w("plugin:webview|create_webview_window", {
+            options: { ...i, parent: typeof i.parent == "string" ? i.parent : (r = i.parent) == null ? void 0 : r.label, label: e }
           });
       else {
         if (typeof window > "u") throw new Error("Window creation is unavailable outside a browser or Tauri runtime");
-        const t = w();
-        t.getAll().some((o) => o.label === e) || t.open(i.url ?? window.location.href, "webview-window", void 0, e);
+        const l = d();
+        l.getAll().some((o) => o.label === e) || l.open(i.url ?? window.location.href, "webview-window", void 0, e);
       }
     }), this.ready.then(
       () => this.dispatchLifecycle("tauri://created", null),
-      (t) => this.dispatchLifecycle("tauri://error", t)
+      (r) => this.dispatchLifecycle("tauri://error", r)
     ));
   }
   dispatchLifecycle(e, i) {
-    const r = this.lifecycle.get(e);
-    for (const t of [...r ?? []])
-      t.once && r?.delete(t), t.handler({ event: e, id: -1, payload: i });
+    const n = this.lifecycle.get(e);
+    for (const r of [...n ?? []])
+      r.once && (n == null || n.delete(r)), r.handler({ event: e, id: -1, payload: i });
   }
-  lifecycleListener(e, i, r) {
-    const t = this.lifecycle.get(e) ?? /* @__PURE__ */ new Set();
-    this.lifecycle.set(e, t);
-    const o = { handler: i, once: r };
-    return t.add(o), Promise.resolve(() => {
-      t.delete(o);
+  lifecycleListener(e, i, n) {
+    const r = this.lifecycle.get(e) ?? /* @__PURE__ */ new Set();
+    this.lifecycle.set(e, r);
+    const l = { handler: i, once: n };
+    return r.add(l), Promise.resolve(() => {
+      r.delete(l);
     });
   }
   listen(e, i) {
@@ -48,36 +49,37 @@ class g extends y {
     return e === "tauri://created" || e === "tauri://error" ? this.lifecycleListener(e, i, !0) : super.once(e, i);
   }
   async close() {
-    await this.ready, s() || !this.label ? await super.close() : w().closeLabel(this.label);
+    await this.ready, s() || !this.label ? await super.close() : d().closeLabel(this.label);
   }
   async destroy() {
     s() ? await super.destroy() : await this.close();
   }
   static getCurrent() {
-    return m();
+    return _();
   }
   static getAll() {
-    return u();
+    return f();
   }
   static async getByLabel(e) {
-    const i = await u();
-    return i.find((r) => r.label === e) ?? i.find((r) => r.windowId === e) ?? null;
+    const i = await f();
+    return i.find((n) => n.label === e) ?? i.find((n) => n.windowId === e) ?? null;
   }
 }
-function l(n) {
-  const e = new g(n.label, {}, f);
-  return e.windowId = n.windowId, e;
+function a(t) {
+  const e = new m(t.label, {}, y);
+  return e.windowId = t.windowId, e;
 }
-function m() {
-  const n = b(), e = n?.label ?? h();
-  return l({ label: e, windowId: n?.windowId ?? d()?.windowId ?? e });
+function _() {
+  var i;
+  const t = g(), e = (t == null ? void 0 : t.label) ?? p();
+  return a({ label: e, windowId: (t == null ? void 0 : t.windowId) ?? ((i = c()) == null ? void 0 : i.windowId) ?? e });
 }
-async function u() {
-  return s() ? d() ? (await a("list_custom_plugin_windows", {})).map(l) : (await a("plugin:window|get_all_windows")).map((n) => l({ label: n, windowId: n })) : typeof window > "u" ? [] : w().getAll().map((n) => l({ label: n.label, windowId: n.label }));
+async function f() {
+  return s() ? c() ? (await w("list_custom_plugin_windows", {})).map(a) : (await w("plugin:window|get_all_windows")).map((t) => a({ label: t, windowId: t })) : typeof window > "u" ? [] : d().getAll().map((t) => a({ label: t.label, windowId: t.label }));
 }
 export {
-  g as WebviewWindow,
-  u as getAllWebviewWindows,
-  m as getCurrentWebviewWindow
+  m as WebviewWindow,
+  f as getAllWebviewWindows,
+  _ as getCurrentWebviewWindow
 };
 //# sourceMappingURL=tauri-webview-window-shim.js.map

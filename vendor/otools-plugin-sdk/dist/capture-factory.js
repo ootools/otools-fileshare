@@ -1,133 +1,134 @@
 class l extends Error {
-  constructor(a, n) {
-    super(n), this.code = a, this.name = "CaptureError";
+  constructor(n, t) {
+    super(t), this.code = n, this.name = "CaptureError";
   }
 }
-const B = ["unsupported", "permissionDenied", "busy", "cancelled", "timeout", "notFound", "invalidRequest", "forbidden", "captureFailed", "outputFailed"];
-function I(i) {
-  if (i instanceof l) return i;
-  let a = i;
-  if (typeof a == "string")
+const S = ["unsupported", "permissionDenied", "busy", "cancelled", "timeout", "notFound", "invalidRequest", "forbidden", "captureFailed", "outputFailed"];
+function x(o) {
+  if (o instanceof l) return o;
+  let n = o;
+  if (typeof n == "string")
     try {
-      a = JSON.parse(a);
+      n = JSON.parse(n);
     } catch {
     }
-  const n = a && typeof a == "object" ? a : void 0, o = n?.message || String(i), p = n?.code && B.includes(n.code) ? n.code : /runtime.*unavailable|bridge.*unavailable|not supported|unknown command|command .*not found/i.test(o) ? "unsupported" : "captureFailed";
-  return new l(p, o);
+  const t = n && typeof n == "object" ? n : void 0, r = (t == null ? void 0 : t.message) || String(o), p = t != null && t.code && S.includes(t.code) ? t.code : /runtime.*unavailable|bridge.*unavailable|not supported|unknown command|command .*not found/i.test(r) ? "unsupported" : "captureFailed";
+  return new l(p, r);
 }
-function S(i) {
-  const a = async (n, o) => {
+function k(o) {
+  const n = async (t, r) => {
     try {
-      return await i.invoke(`otools_host_capture_${n}`, o);
+      return await o.invoke(`otools_host_capture_${t}`, r);
     } catch (p) {
-      throw I(p);
+      throw x(p);
     }
   };
   return {
-    capabilities: () => a("capabilities"),
-    permissionStatus: () => a("permission_status"),
-    requestPermission: () => a("request_permission"),
-    repairPermission: () => a("repair_permission"),
-    screen: (n = {}) => a("screen", { options: n }),
-    region: (n) => a("region", { options: n }),
-    window: (n = {}) => a("window", { options: n }),
-    pin: (n) => a("pin", { options: n }),
-    retain: (n) => a("retain", { imageId: n }),
-    release: (n) => a("release", { imageId: n }),
-    select(n = {}, o) {
-      return new Promise((p, s) => {
-        let r = !1, e, d, c, u = !1;
-        const g = /* @__PURE__ */ new Set(), w = (t) => {
-          t?.status === "completed" && t.captureId === e && !g.has(t.image.imageId) && (g.add(t.image.imageId), a("release", { imageId: t.image.imageId }).catch(() => {
+    capabilities: () => n("capabilities"),
+    permissionStatus: () => n("permission_status"),
+    requestPermission: () => n("request_permission"),
+    repairPermission: () => n("repair_permission"),
+    screen: (t = {}) => n("screen", { options: t }),
+    region: (t) => n("region", { options: t }),
+    window: (t = {}) => n("window", { options: t }),
+    pin: (t) => n("pin", { options: t }),
+    retain: (t) => n("retain", { imageId: t }),
+    release: (t) => n("release", { imageId: t }),
+    select(t = {}, r) {
+      return new Promise((p, c) => {
+        let i = !1, a, d, s, u = !1;
+        const w = /* @__PURE__ */ new Set(), v = (e) => {
+          (e == null ? void 0 : e.status) === "completed" && e.captureId === a && !w.has(e.image.imageId) && (w.add(e.image.imageId), n("release", { imageId: e.image.imageId }).catch(() => {
           }));
-        }, v = (t) => {
-          a("cancel", { captureId: t }).then(() => a("result", { captureId: t })).then(w).catch(() => {
+        }, b = (e) => {
+          n("cancel", { captureId: e }).then(() => n("result", { captureId: e })).then(v).catch(() => {
           });
-        }, b = () => {
-          const t = d;
-          if (d = void 0, t)
+        }, I = () => {
+          const e = d;
+          if (d = void 0, e)
             try {
-              Promise.resolve(t()).catch(() => {
+              Promise.resolve(e()).catch(() => {
               });
             } catch {
             }
-        }, f = (t, m) => {
-          r || (r = !0, clearTimeout(x), clearTimeout(c), o?.removeEventListener("abort", h), b(), m ? (e && v(e), s(I(m))) : p(t));
-        }, h = () => f(void 0, new l("cancelled", "Capture aborted")), x = setTimeout(() => f(void 0, new l("timeout", "Capture timed out")), 600 * 1e3), y = async () => {
-          if (!(r || !e || u)) {
-            clearTimeout(c), u = !0;
+        }, f = (e, m) => {
+          i || (i = !0, clearTimeout(B), clearTimeout(s), r == null || r.removeEventListener("abort", h), I(), m ? (a && b(a), c(x(m))) : p(e));
+        }, h = () => f(void 0, new l("cancelled", "Capture aborted")), B = setTimeout(() => f(void 0, new l("timeout", "Capture timed out")), 600 * 1e3), y = async () => {
+          if (!(i || !a || u)) {
+            clearTimeout(s), u = !0;
             try {
-              const t = await a("result", { captureId: e });
-              if (r) {
-                w(t);
+              const e = await n("result", { captureId: a });
+              if (i) {
+                v(e);
                 return;
               }
-              if (t) {
-                if (t.captureId !== e || !["completed", "cancelled", "error"].includes(t.status))
+              if (e) {
+                if (e.captureId !== a || !["completed", "cancelled", "error"].includes(e.status))
                   throw new l("captureFailed", "Invalid capture result");
-                f(t);
+                f(e);
               }
-            } catch (t) {
-              f(void 0, t);
+            } catch (e) {
+              f(void 0, e);
             } finally {
-              u = !1, r || (c = setTimeout(() => {
+              u = !1, i || (s = setTimeout(() => {
                 y();
               }, 250));
             }
           }
         };
-        if (o?.addEventListener("abort", h, { once: !0 }), o?.aborted) {
+        if (r == null || r.addEventListener("abort", h, { once: !0 }), r != null && r.aborted) {
           h();
           return;
         }
         (async () => {
           try {
-            if (i.listen)
+            if (o.listen)
               try {
-                d = await i.listen("otools-capture-result", (m) => {
-                  m.payload?.captureId === e && y();
+                d = await o.listen("otools-capture-result", (m) => {
+                  var g;
+                  ((g = m.payload) == null ? void 0 : g.captureId) === a && y();
                 });
               } catch {
               }
-            if (r) {
-              b();
+            if (i) {
+              I();
               return;
             }
-            const t = await a("begin", { options: n });
-            if (!t?.captureId) throw new l("captureFailed", "Missing capture id");
-            if (e = t.captureId, r) {
-              v(e);
+            const e = await n("begin", { options: t });
+            if (!(e != null && e.captureId)) throw new l("captureFailed", "Missing capture id");
+            if (a = e.captureId, i) {
+              b(a);
               return;
             }
             y();
-          } catch (t) {
-            f(void 0, t);
+          } catch (e) {
+            f(void 0, e);
           }
         })();
       });
     },
-    async readImage(n) {
-      let s = 0, r;
+    async readImage(t) {
+      let c = 0, i;
       do {
-        const e = await a("read_chunk", { imageId: n, offset: s, length: 1048576 }), d = () => new l("captureFailed", "Invalid capture image chunk");
-        if (!e || !Number.isSafeInteger(e.totalBytes) || e.totalBytes <= 0 || e.totalBytes > 67108864 || !Number.isSafeInteger(e.nextOffset) || e.nextOffset <= s || e.nextOffset > e.totalBytes || e.nextOffset - s > 1048576 || typeof e.dataBase64 != "string" || e.dataBase64.length > Math.ceil(1048576 / 3) * 4 || r && r.length !== e.totalBytes) throw d();
-        let c;
+        const a = await n("read_chunk", { imageId: t, offset: c, length: 1048576 }), d = () => new l("captureFailed", "Invalid capture image chunk");
+        if (!a || !Number.isSafeInteger(a.totalBytes) || a.totalBytes <= 0 || a.totalBytes > 67108864 || !Number.isSafeInteger(a.nextOffset) || a.nextOffset <= c || a.nextOffset > a.totalBytes || a.nextOffset - c > 1048576 || typeof a.dataBase64 != "string" || a.dataBase64.length > Math.ceil(1048576 / 3) * 4 || i && i.length !== a.totalBytes) throw d();
+        let s;
         try {
-          c = atob(e.dataBase64);
+          s = atob(a.dataBase64);
         } catch {
           throw d();
         }
-        if (c.length !== e.nextOffset - s) throw d();
-        r ??= new Uint8Array(e.totalBytes);
-        for (let u = 0; u < c.length; u++) r[s + u] = c.charCodeAt(u);
-        s = e.nextOffset;
-      } while (s < r.length);
-      return r;
+        if (s.length !== a.nextOffset - c) throw d();
+        i ?? (i = new Uint8Array(a.totalBytes));
+        for (let u = 0; u < s.length; u++) i[c + u] = s.charCodeAt(u);
+        c = a.nextOffset;
+      } while (c < i.length);
+      return i;
     }
   };
 }
 export {
   l as CaptureError,
-  S as createCaptureApi
+  k as createCaptureApi
 };
 //# sourceMappingURL=capture-factory.js.map

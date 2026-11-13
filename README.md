@@ -15,8 +15,13 @@
 
 ## 本地安装
 
-本次已构建的安装包：`dist-pack/otools-fileshare-0.1.0.oplg`。
-在 OTools 插件管理中选择本地安装该文件。默认以 **panel** 打开（`openMode: "panel"`）。**本地包仅带 macOS arm64 动态库**；其他平台须用 CI 或相应平台自行构建。
+在 OTools 市场更新，或从 [GitHub Release](https://github.com/ootools/otools-fileshare/releases) 下载对应平台/架构的包本地安装。默认以 **panel** 打开（`openMode: "panel"`）。从 v0.1.4 起仅发布六种分包，`packageMode=1`，每包只包含自己的动态库：
+
+- `-macos.oplg`：macOS ARM64；`-macos-intel.oplg`：macOS Intel。
+- `-windows.oplg`：Windows x64；`-windows-arm.oplg`：Windows ARM64。
+- `-linux.oplg`：Linux x64；`-linux-arm.oplg`：Linux ARM64。
+
+v0.1.5 修复页面内文件树的宿主请求契约，加入多选、高亮勾选、目录提示与错误重试。磁盘快捷入口是在 OTools 宿主中实现的，宿主须包含 `8f59c100` 或更新代码并重建，不能只靠插件升级获得新磁盘枚举能力。
 
 插件装包后的入口为 `dist/index.html`，原生库为 `lib/macOS.dylib` / `Windows.dll` / `Linux.so`。手机页面随包放在 `web-static/page_web/`，由 native 服务器托管。
 
@@ -32,8 +37,8 @@ pnpm test
 pnpm test:native
 node scripts/build-web.mjs
 node scripts/build-native.mjs
-node scripts/pack-plugin.mjs --out dist-pack --version 0.1.0
-node scripts/verify-plugin.mjs dist-pack
+node scripts/pack-plugin.mjs --platform macos --arch arm64 --out dist-pack
+node scripts/verify-plugin.mjs dist-pack/macos
 ```
 
 - 面板开发：`pnpm dev`，`http://127.0.0.1:6546`（宿主 quickDev 指向该地址）。
@@ -46,7 +51,7 @@ node scripts/verify-plugin.mjs dist-pack
 
 ```bash
 python3 -I scripts/verify-native-e2e.py \
-  --package dist-pack/otools-fileshare-0.1.0.oplg \
+  --package dist-pack/macos/otools-fileshare-0.1.5-macos.oplg \
   --output /tmp/otools-fileshare-native-e2e.json
 ```
 
@@ -62,8 +67,8 @@ python3 -I scripts/verify-native-e2e.py \
 
 ## 发布与验证状态
 
-CI 配置已准备四个 native runner（Windows、Linux、macOS arm64、macOS x86_64），macOS 库经 `lipo` 合并 universal2 并 ad-hoc 签名后再与两端前端共同打包。**本会话未创建 GitHub 仓库、未推送、未运行远程 CI、未发布市场。**
+CI 使用 Windows x64/ARM64、Linux x64/ARM64、macOS ARM64/Intel 六个 runner。只打各自架构分包，不再发布 universal2 或三平台合包；市场使用六个包地址并设 `packageMode=1`。
 
-验收实测与仍需补测事项见 [`docs/verification.md`](docs/verification.md)。宿主内原生拖放、文件对话框和第二台设备 LAN 吞吐仍需实际 OTools / 设备测试；不以普通浏览器模拟结果代替宿主验收。
+验收实测与仍需补测事项见 [`docs/verification.md`](docs/verification.md)。页面内文件选择器保持在 panel 的 webview 内，不弹出会夺焦的原生对话框。实际宿主面板、外置盘热拔插和第二台设备 LAN 吞吐仍需实机验证；不以普通浏览器模拟结果代替宿主验收。
 
 来源/许可：见 [`LICENSE`](LICENSE)、[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。宿主快照与字体的公共再分发许可需在正式发布前确认。

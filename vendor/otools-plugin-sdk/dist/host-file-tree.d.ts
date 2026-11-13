@@ -6,7 +6,7 @@ export interface PickFromHostTreeOptions {
     title?: string;
     /** true=选目录，false=选文件。 */
     directory?: boolean;
-    /** 预留多选，首版仅单选。 */
+    /** 多文件选择；目录选择返回当前目录。 */
     multiple?: boolean;
     /** 初始目录；缺省由宿主返回 home。 */
     startPath?: string;

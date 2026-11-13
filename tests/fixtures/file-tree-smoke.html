@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>文件选择器回归验收</title></head>
+<body>
+  <h1>文件选择器回归验收</h1>
+  <p>测试夹具：真实插件 SDK，自绘弹层；目录响应使用固定测试数据，不代表 OTools 实机。</p>
+  <button id="files">选择文件</button>
+  <button id="folders">选择文件夹</button>
+  <button id="failure">模拟目录读取失败</button>
+  <output id="result">尚未选择</output>
+  <pre id="calls"></pre>
+  <script type="module">
+    import { pickFromHostTree } from '/vendor/otools-plugin-sdk/dist/index.js';
+    const home='/fixture';
+    const calls=[];
+    let failNext=false;
+    window.otools={invokeNative:async()=>{throw new Error('错误：目录请求不得调用插件 native');}};
+    window.__TAURI_INTERNALS__={invoke:async(command,args)=>{
+      calls.push([command,args]);
+      document.getElementById('calls').textContent=JSON.stringify(calls,null,2);
+      if(command!=='tools_webview_browse_dialog'||!args?.request)throw new Error('IPC 参数错误');
+      if(failNext){failNext=false;throw new Error('测试目录读取被拒绝');}
+      const path=args.request.path||home;
+      if(![home,home+'/docs'].includes(path))throw new Error('测试目录不存在');
+      return {currentPath:path,parentPath:path===home?null:home,roots:[],entries:path===home?[
+        {name:'文件一.txt',path:home+'/one.txt',kind:'file',size:3,mime:'text/plain'},
+        {name:'文件二.txt',path:home+'/two.txt',kind:'file',size:4,mime:'text/plain'},
+        {name:'docs',path:home+'/docs',kind:'directory',size:0,mime:'inode/directory'}
+      ]:[]};
+    }};
+    async function select(options){
+      document.getElementById('result').textContent='正在选择';
+      const result=await pickFromHostTree(options);
+      document.getElementById('result').textContent=JSON.stringify(result);
+    }
+    document.getElementById('files').onclick=()=>select({title:'选择文件',multiple:true});
+    document.getElementById('folders').onclick=()=>select({title:'选择文件夹',directory:true});
+    document.getElementById('failure').onclick=()=>{failNext=true;select({title:'读取失败测试',directory:true});};
+  </script>
+</body>
+</html>

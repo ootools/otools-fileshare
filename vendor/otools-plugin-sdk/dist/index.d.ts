@@ -1,4 +1,13 @@
 export * from './capture';
+export { createAgentApi, AgentError } from './agent-factory';
+export type * from './agent-types';
+export { createAiApi } from './ai-factory';
+export type * from './ai-types';
+export { createPluginDataApi } from './plugin-data-factory';
+export type * from './plugin-data-types';
+export * from './observation-factory';
+export { createReminderApi } from './reminder-factory';
+export type * from './reminder-types';
 export { createOtoolsAliasMap } from './aliases';
 export { otoolsTauriShimPlugin } from './vite';
 export { invoke, listen, emit, getOtoolsApi, isOtoolsPluginRuntime, openExternal, openPath, type Event, type UnlistenFn, } from './runtime';

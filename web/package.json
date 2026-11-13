@@ -1,6 +1,6 @@
 {
   "name": "otools-fileshare-panel",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "private": true,
   "type": "module",
   "scripts": { "dev": "vite --host 127.0.0.1 --port 6546", "build": "vite build" },

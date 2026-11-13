@@ -1,33 +1,33 @@
-function e() {
+function o() {
   if (!(typeof window > "u"))
     return window.otools ?? window.utools;
 }
-async function l(o) {
-  const n = e();
-  if (n?.shellOpenExternal) {
-    n.shellOpenExternal(o);
+async function t(e) {
+  const n = o();
+  if (n != null && n.shellOpenExternal) {
+    n.shellOpenExternal(e);
     return;
   }
-  typeof window < "u" && window.open(o, "_blank", "noopener,noreferrer");
+  typeof window < "u" && window.open(e, "_blank", "noopener,noreferrer");
 }
-async function t(o) {
-  const n = e();
-  if (n?.shellOpenPath) {
-    n.shellOpenPath(o);
+async function r(e) {
+  const n = o();
+  if (n != null && n.shellOpenPath) {
+    n.shellOpenPath(e);
     return;
   }
 }
-async function r(o) {
-  const n = e();
-  if (n?.shellShowItemInFolder) {
-    n.shellShowItemInFolder(o);
+async function i(e) {
+  const n = o();
+  if (n != null && n.shellShowItemInFolder) {
+    n.shellShowItemInFolder(e);
     return;
   }
-  await t(o);
+  await r(e);
 }
 export {
-  t as openPath,
-  l as openUrl,
-  r as revealItemInDir
+  r as openPath,
+  t as openUrl,
+  i as revealItemInDir
 };
 //# sourceMappingURL=tauri-plugin-opener-shim.js.map
